@@ -1,0 +1,6 @@
+# Built library artifacts copied into build contexts
+artifacts/
+# Per-language build cruft that may leak into contexts
+**/bin/
+**/obj/
+**/target/
