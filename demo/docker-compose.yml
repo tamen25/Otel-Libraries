@@ -1,0 +1,93 @@
+name: otel-demo
+
+services:
+  loki:
+    image: grafana/loki:3.2.0
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./loki/config.yaml:/etc/loki/config.yaml:ro
+    ports:
+      - "3100:3100"
+
+  tempo:
+    image: grafana/tempo:2.6.0
+    command: -config.file=/etc/tempo/config.yaml
+    volumes:
+      - ./tempo/config.yaml:/etc/tempo/config.yaml:ro
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/collector/config.yaml"]
+    volumes:
+      - ./collector/config.yaml:/etc/collector/config.yaml:ro
+    ports:
+      - "4318:4318"
+    depends_on:
+      - loki
+      - tempo
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - tempo
+
+  python-app:
+    build:
+      context: .
+      dockerfile: apps/python/Dockerfile
+    environment:
+      OTEL_SERVICE_NAME: python-app
+      OTEL_BACKEND_EXPORTERS: otel
+      OTEL_LOG_LEVEL: info,warn,error,debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      JAVA_URL: http://java-app:8080/process
+    restart: unless-stopped
+    depends_on:
+      - otel-collector
+
+  java-app:
+    build:
+      context: ..
+      dockerfile: demo/apps/java/Dockerfile
+    environment:
+      OTEL_SERVICE_NAME: java-app
+      OTEL_BACKEND_EXPORTERS: otel
+      OTEL_LOG_LEVEL: info,warn,error,debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      DOTNET_URL: http://dotnet-app:8081/finalize
+    restart: unless-stopped
+    depends_on:
+      - otel-collector
+
+  dotnet-app:
+    build:
+      context: .
+      dockerfile: apps/dotnet/Dockerfile
+    environment:
+      OTEL_SERVICE_NAME: dotnet-app
+      OTEL_BACKEND_EXPORTERS: otel
+      OTEL_LOG_LEVEL: info,warn,error,debug
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    restart: unless-stopped
+    depends_on:
+      - otel-collector
+
+  loadgen:
+    build:
+      context: .
+      dockerfile: apps/loadgen/Dockerfile
+    environment:
+      TARGET: http://python-app:8000/order
+    restart: unless-stopped
+    depends_on:
+      - python-app
