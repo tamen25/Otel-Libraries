@@ -1,0 +1,50 @@
+{
+  "title": "Per-App Drilldown",
+  "uid": "per-app-drilldown",
+  "schemaVersion": 39,
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": { "label": "service_name", "stream": "", "type": 1 },
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "python-app", "value": "python-app" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "title": "$service - volume by level",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (detected_level) (count_over_time({service_name=\"$service\"}[1m]))",
+          "legendFormat": "{{detected_level}}"
+        }
+      ]
+    },
+    {
+      "title": "$service - all logs",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 8 },
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
+      "targets": [ { "expr": "{service_name=\"$service\"}" } ]
+    },
+    {
+      "title": "$service - errors only",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 8 },
+      "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
+      "targets": [ { "expr": "{service_name=\"$service\", detected_level=\"error\"}" } ]
+    }
+  ]
+}
