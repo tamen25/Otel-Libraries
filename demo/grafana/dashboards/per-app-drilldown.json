@@ -44,7 +44,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "h": 10, "w": 12, "x": 12, "y": 8 },
       "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
-      "targets": [ { "expr": "{service_name=\"$service\", detected_level=\"error\"}" } ]
+      "targets": [ { "expr": "{service_name=\"$service\"} | detected_level=`error`" } ]
     }
   ]
 }

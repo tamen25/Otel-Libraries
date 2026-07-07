@@ -2,8 +2,10 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
 # Copy and install the CloudOps logs library into the local Maven repo.
+# Skip tests AND the JaCoCo coverage gate: we only need the installed jar+POM,
+# and with tests skipped JaCoCo would otherwise fail the coverage check at 0%.
 COPY libraries/java/logs /libs/logs
-RUN mvn -q -f /libs/logs/pom.xml install -DskipTests
+RUN mvn -q -f /libs/logs/pom.xml install -DskipTests -Djacoco.skip=true
 # Build the demo app.
 COPY demo/apps/java/pom.xml .
 COPY demo/apps/java/src ./src
