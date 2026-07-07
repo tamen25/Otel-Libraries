@@ -1,0 +1,38 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+  # Promote resource + severity to attributes Loki can label on.
+  resource:
+    attributes:
+      - key: service_name
+        from_attribute: service.name
+        action: upsert
+
+exporters:
+  # Loki accepts OTLP directly on /otlp; hint which attributes become labels.
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+  otlp/tempo:
+    endpoint: http://tempo:4317
+    tls:
+      insecure: true
+  debug:
+    verbosity: normal
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlphttp/loki, debug]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/tempo]
