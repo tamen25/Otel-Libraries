@@ -110,12 +110,4 @@
       </plugin>
     </plugins>
   </build>
-
-  <distributionManagement>
-    <repository>
-      <id>codeartifact</id>
-      <name>CloudOps CodeArtifact Maven</name>
-      <url>${env.CODEARTIFACT_MAVEN_ENDPOINT}</url>
-    </repository>
-  </distributionManagement>
 </project>
