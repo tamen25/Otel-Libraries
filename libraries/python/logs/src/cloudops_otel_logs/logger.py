@@ -33,7 +33,7 @@ LogLevel = str
 DEFAULT_EXPORTERS = ["console"]
 DEFAULT_LOG_LEVELS = {"info", "error", "debug", "warn"}
 VALID_LOG_LEVELS = DEFAULT_LOG_LEVELS
-DEFAULT_SSM_PARAMETERS_FILE = "/tmp/otelExporterParams.json"
+DEFAULT_EXPORTER_PARAMETERS_FILE = "/tmp/otelExporterParams.json"
 
 
 @dataclass
@@ -48,7 +48,7 @@ class BackendConfig:
 
 
 @dataclass
-class SsmParameters:
+class ExporterParameters:
     otel: BackendConfig | None = None
 
     #Checks whether empty.
@@ -124,54 +124,54 @@ def _normalize_endpoint(endpoint: str | None) -> str | None:
     return normalized if normalized.endswith("/v1/logs") else f"{normalized}/v1/logs"
 
 
-#Handles SSM parameters from JSON.
-def _ssm_parameters_from_json(parsed: Any) -> SsmParameters:
+#Handles exporter parameters from JSON.
+def _exporter_parameters_from_json(parsed: Any) -> ExporterParameters:
     if not isinstance(parsed, Mapping):
-        return SsmParameters()
+        return ExporterParameters()
 
     otel = parsed.get("otel", {})
     logs = otel.get("logs", {}) if isinstance(otel, Mapping) else {}
     logs = logs if isinstance(logs, Mapping) else {}
-    return SsmParameters(otel=BackendConfig(logs=LogsExporterConfig(
+    return ExporterParameters(otel=BackendConfig(logs=LogsExporterConfig(
         url=logs.get("url"),
         api_key=logs.get("api_key"),
     )))
 
 
-#Reads SSM parameters file.
-def _read_ssm_parameters_file(file_path: str | None = None) -> SsmParameters:
-    resolved_path = file_path or os.getenv("OTEL_SSM_PARAMETERS_FILE") or DEFAULT_SSM_PARAMETERS_FILE
+#Reads exporter parameters file.
+def _read_exporter_parameters_file(file_path: str | None = None) -> ExporterParameters:
+    resolved_path = file_path or os.getenv("OTEL_EXPORTER_PARAMETERS_FILE") or DEFAULT_EXPORTER_PARAMETERS_FILE
     try:
         with open(resolved_path, encoding="utf-8") as params_file:
-            return _ssm_parameters_from_json(json.load(params_file))
+            return _exporter_parameters_from_json(json.load(params_file))
     except FileNotFoundError:
-        return SsmParameters()
+        return ExporterParameters()
     except (OSError, json.JSONDecodeError) as error:
         logging.getLogger(__name__).error("Error reading or parsing otelExporterParams.json: %s", error)
-        return SsmParameters()
+        return ExporterParameters()
 
 
-#Reads SSM parameters.
-def _read_ssm_parameters() -> SsmParameters:
-    configured = os.getenv("OTEL_SSM_PARAMETERS")
+#Reads exporter parameters.
+def _read_exporter_parameters() -> ExporterParameters:
+    configured = os.getenv("OTEL_EXPORTER_PARAMETERS")
     if configured:
         try:
-            parameters = _ssm_parameters_from_json(json.loads(configured))
+            parameters = _exporter_parameters_from_json(json.loads(configured))
             if not parameters.is_empty():
                 return parameters
         except (json.JSONDecodeError, AttributeError):
             pass
 
-    file_parameters = _read_ssm_parameters_file()
+    file_parameters = _read_exporter_parameters_file()
     if not file_parameters.is_empty():
         return file_parameters
 
     logs_url = os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT") or _normalize_endpoint(os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
     api_key = os.getenv("OTEL_API_KEY") or os.getenv("OTEL_EXPORTER_OTLP_HEADERS")
     if logs_url or api_key:
-        return SsmParameters(otel=BackendConfig(logs=LogsExporterConfig(url=logs_url, api_key=api_key)))
+        return ExporterParameters(otel=BackendConfig(logs=LogsExporterConfig(url=logs_url, api_key=api_key)))
 
-    return SsmParameters()
+    return ExporterParameters()
 
 
 #Finds first env.
@@ -364,8 +364,8 @@ class CloudOpsLogger:
             self._use_console = True
             return
 
-        ssm_parameters = _read_ssm_parameters()
-        if ssm_parameters.is_empty():
+        exporter_parameters = _read_exporter_parameters()
+        if exporter_parameters.is_empty():
             self._use_console = True
             return
 
@@ -373,13 +373,13 @@ class CloudOpsLogger:
             if exporter == "console":
                 self._use_console = True
             elif exporter == "otel":
-                self._initialise_otel(ssm_parameters)
+                self._initialise_otel(exporter_parameters)
             else:
                 self._use_console = True
 
     #Initializes OTel.
-    def _initialise_otel(self, ssm_parameters: SsmParameters) -> None:
-        config = ssm_parameters.backend("otel").logs if ssm_parameters.backend("otel") else None
+    def _initialise_otel(self, exporter_parameters: ExporterParameters) -> None:
+        config = exporter_parameters.backend("otel").logs if exporter_parameters.backend("otel") else None
         if not config or not _otel_available():
             self._use_console = True
             return
@@ -463,10 +463,6 @@ def _span_context() -> Any:
 
 #Gets current trace ID.
 def _current_trace_id() -> str:
-    lambda_trace_id = os.getenv("_X_AMZN_TRACE_ID")
-    if lambda_trace_id:
-        return lambda_trace_id
-
     span_context = _span_context()
     if span_context is not None and getattr(span_context, "is_valid", False):
         return f"{span_context.trace_id:032x}"

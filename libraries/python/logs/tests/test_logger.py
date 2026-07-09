@@ -12,12 +12,12 @@ from cloudops_otel_logs.logger import (
     LogEntry,
     LogSampler,
     LogsExporterConfig,
-    SsmParameters,
+    ExporterParameters,
     _normalize_endpoint,
     _parse_log_levels,
     _parse_resource_attributes,
     _parse_string_list,
-    _read_ssm_parameters,
+    _read_exporter_parameters,
     _sampling_rate,
 )
 
@@ -135,59 +135,59 @@ class CloudOpsLoggerTests(unittest.TestCase):
         )
         self.assertEqual(_normalize_endpoint("https://collector.example.com/"), "https://collector.example.com/v1/logs")
 
-    #Handles test read SSM parameters prefers JSON and falls back to OTel env.
-    def test_read_ssm_parameters_prefers_json_and_falls_back_to_otel_env(self):
+    #Handles test read exporter parameters prefers JSON and falls back to OTel env.
+    def test_read_exporter_parameters_prefers_json_and_falls_back_to_otel_env(self):
         with patch.dict("os.environ", {
-            "OTEL_SSM_PARAMETERS": '{"otel":{"logs":{"url":"https://collector.example.com/v1/logs","api_key":"secret"}}}',
+            "OTEL_EXPORTER_PARAMETERS": '{"otel":{"logs":{"url":"https://collector.example.com/v1/logs","api_key":"secret"}}}',
             "OTEL_EXPORTER_OTLP_ENDPOINT": "https://fallback.example.com",
             "OTEL_API_KEY": "fallback-secret",
         }, clear=True):
-            parsed = _read_ssm_parameters()
+            parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://collector.example.com/v1/logs")
         self.assertEqual(parsed.otel.logs.api_key, "secret")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             with patch.dict("os.environ", {
-                "OTEL_SSM_PARAMETERS_FILE": os.path.join(temp_dir, "missing.json"),
+                "OTEL_EXPORTER_PARAMETERS_FILE": os.path.join(temp_dir, "missing.json"),
                 "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.example.com/",
                 "OTEL_API_KEY": "direct-secret",
             }, clear=True):
-                parsed = _read_ssm_parameters()
+                parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://collector.example.com/v1/logs")
         self.assertEqual(parsed.otel.logs.api_key, "direct-secret")
 
-    #Handles test read SSM parameters uses params file before direct env.
-    def test_read_ssm_parameters_uses_params_file_before_direct_env(self):
+    #Handles test read exporter parameters uses params file before direct env.
+    def test_read_exporter_parameters_uses_params_file_before_direct_env(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             params_file = os.path.join(temp_dir, "otelExporterParams.json")
             with open(params_file, "w", encoding="utf-8") as file:
                 file.write('{"otel":{"logs":{"url":"https://file.example.com/v1/logs","api_key":"file-secret"}}}')
 
             with patch.dict("os.environ", {
-                "OTEL_SSM_PARAMETERS_FILE": params_file,
+                "OTEL_EXPORTER_PARAMETERS_FILE": params_file,
                 "OTEL_EXPORTER_OTLP_ENDPOINT": "https://fallback.example.com",
                 "OTEL_API_KEY": "fallback-secret",
             }, clear=True):
-                parsed = _read_ssm_parameters()
+                parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://file.example.com/v1/logs")
         self.assertEqual(parsed.otel.logs.api_key, "file-secret")
 
-    #Handles test read SSM parameters falls back when params file is invalid.
-    def test_read_ssm_parameters_falls_back_when_params_file_is_invalid(self):
+    #Handles test read exporter parameters falls back when params file is invalid.
+    def test_read_exporter_parameters_falls_back_when_params_file_is_invalid(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             params_file = os.path.join(temp_dir, "otelExporterParams.json")
             with open(params_file, "w", encoding="utf-8") as file:
                 file.write("{not-json")
 
             with patch.dict("os.environ", {
-                "OTEL_SSM_PARAMETERS_FILE": params_file,
+                "OTEL_EXPORTER_PARAMETERS_FILE": params_file,
                 "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT": "https://fallback.example.com/v1/logs",
                 "OTEL_API_KEY": "fallback-secret",
             }, clear=True):
-                parsed = _read_ssm_parameters()
+                parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://fallback.example.com/v1/logs")
         self.assertEqual(parsed.otel.logs.api_key, "fallback-secret")
@@ -233,12 +233,12 @@ class CloudOpsLoggerTests(unittest.TestCase):
         sampler.add_log(LogEntry(invocation_id="batch-1", level="error", message="boom"))
         self.assertEqual([entry.message for entry in logger.processed], ["boom"])
 
-    #Handles test SSM parameters backend and empty detection.
-    def test_ssm_parameters_backend_and_empty_detection(self):
-        self.assertTrue(SsmParameters().is_empty())
+    #Handles test exporter parameters backend and empty detection.
+    def test_exporter_parameters_backend_and_empty_detection(self):
+        self.assertTrue(ExporterParameters().is_empty())
 
         backend = BackendConfig(logs=LogsExporterConfig(url="https://collector.example.com/v1/logs"))
-        parameters = SsmParameters(otel=backend)
+        parameters = ExporterParameters(otel=backend)
 
         self.assertFalse(parameters.is_empty())
         self.assertIs(parameters.backend("otel"), backend)
