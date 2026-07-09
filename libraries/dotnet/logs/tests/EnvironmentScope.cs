@@ -5,14 +5,12 @@ internal sealed class EnvironmentScope : IDisposable
 {
     private static readonly string[] TelemetryKeys =
     [
-        "AWS_LAMBDA_FUNCTION_NAME",
+        "AKS_CLUSTER_NAME",
+        "CONTAINER_APP_NAME",
         "CONTAINER_ID",
         "CONTAINER_NAME",
-        "ECS_CONTAINER_METADATA_FILE",
-        "ECS_CONTAINER_METADATA_URI",
-        "ECS_CONTAINER_METADATA_URI_V4",
-        "ECS_CONTAINER_NAME",
-        "EKS_CLUSTER_NAME",
+        "FUNCTIONS_EXTENSION_VERSION",
+        "FUNCTIONS_WORKER_RUNTIME",
         "HOSTNAME",
         "K8S_CLUSTER_NAME",
         "K8S_NAMESPACE_NAME",
@@ -25,15 +23,15 @@ internal sealed class EnvironmentScope : IDisposable
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "OTEL_EXPORTER_OTLP_HEADERS",
         "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
+        "OTEL_EXPORTER_PARAMETERS",
+        "OTEL_EXPORTER_PARAMETERS_FILE",
         "OTEL_LOG_LEVEL",
         "OTEL_LOGS_SAMPLING_RATE",
         "OTEL_RESOURCE_ATTRIBUTES",
         "OTEL_SERVICE_NAME",
-        "OTEL_SSM_PARAMETERS",
-        "OTEL_SSM_PARAMETERS_FILE",
         "POD_NAME",
         "POD_NAMESPACE",
-        "_X_AMZN_TRACE_ID"
+        "WEBSITE_SITE_NAME"
     ];
 
     private readonly Dictionary<string, string?> previousValues = new(StringComparer.Ordinal);

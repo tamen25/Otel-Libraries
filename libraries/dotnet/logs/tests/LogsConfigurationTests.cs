@@ -25,38 +25,38 @@ public sealed class LogsConfigurationTests
     }
 
     [Fact]
-    // Reads SSM parameters prefers configured JSON and falls back to OTel environment.
-    public void ReadSsmParametersPrefersConfiguredJsonAndFallsBackToOtelEnvironment()
+    // Reads exporter parameters prefers configured JSON and falls back to OTel environment.
+    public void ReadExporterParametersPrefersConfiguredJsonAndFallsBackToOtelEnvironment()
     {
         using (new EnvironmentScope(new Dictionary<string, string?>
         {
-            ["OTEL_SSM_PARAMETERS"] = """{"otel":{"logs":{"url":"https://collector.example.com/v1/logs","api_key":"secret"}}}""",
+            ["OTEL_EXPORTER_PARAMETERS"] = """{"otel":{"logs":{"url":"https://collector.example.com/v1/logs","api_key":"secret"}}}""",
             ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com",
             ["OTEL_API_KEY"] = "fallback-secret"
         }))
         {
-            var parsed = LogsConfiguration.ReadSsmParameters();
+            var parsed = LogsConfiguration.ReadExporterParameters();
             Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
             Assert.Equal("secret", parsed.Otel?.Logs?.ApiKey);
         }
 
         using (new EnvironmentScope(new Dictionary<string, string?>
         {
-            ["OTEL_SSM_PARAMETERS"] = null,
-            ["OTEL_SSM_PARAMETERS_FILE"] = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json"),
+            ["OTEL_EXPORTER_PARAMETERS"] = null,
+            ["OTEL_EXPORTER_PARAMETERS_FILE"] = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json"),
             ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://collector.example.com/",
             ["OTEL_API_KEY"] = "direct-secret"
         }))
         {
-            var parsed = LogsConfiguration.ReadSsmParameters();
+            var parsed = LogsConfiguration.ReadExporterParameters();
             Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
             Assert.Equal("direct-secret", parsed.Otel?.Logs?.ApiKey);
         }
     }
 
     [Fact]
-    // Reads SSM parameters uses original params file before direct environment.
-    public void ReadSsmParametersUsesOriginalParamsFileBeforeDirectEnvironment()
+    // Reads exporter parameters uses original params file before direct environment.
+    public void ReadExporterParametersUsesOriginalParamsFileBeforeDirectEnvironment()
     {
         var tempDir = Directory.CreateTempSubdirectory("cloudops-otel-logs-");
 
@@ -69,12 +69,12 @@ public sealed class LogsConfigurationTests
 
             using (new EnvironmentScope(new Dictionary<string, string?>
             {
-                ["OTEL_SSM_PARAMETERS_FILE"] = paramsFile,
+                ["OTEL_EXPORTER_PARAMETERS_FILE"] = paramsFile,
                 ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com",
                 ["OTEL_API_KEY"] = "fallback-secret"
             }))
             {
-                var parsed = LogsConfiguration.ReadSsmParameters();
+                var parsed = LogsConfiguration.ReadExporterParameters();
                 Assert.Equal("https://file.example.com/v1/logs", parsed.Otel?.Logs?.Url);
                 Assert.Equal("file-secret", parsed.Otel?.Logs?.ApiKey);
             }
@@ -86,8 +86,8 @@ public sealed class LogsConfigurationTests
     }
 
     [Fact]
-    // Reads SSM parameters falls back to direct environment when file is invalid.
-    public void ReadSsmParametersFallsBackToDirectEnvironmentWhenFileIsInvalid()
+    // Reads exporter parameters falls back to direct environment when file is invalid.
+    public void ReadExporterParametersFallsBackToDirectEnvironmentWhenFileIsInvalid()
     {
         var tempDir = Directory.CreateTempSubdirectory("cloudops-otel-logs-");
 
@@ -98,12 +98,12 @@ public sealed class LogsConfigurationTests
 
             using (new EnvironmentScope(new Dictionary<string, string?>
             {
-                ["OTEL_SSM_PARAMETERS_FILE"] = paramsFile,
+                ["OTEL_EXPORTER_PARAMETERS_FILE"] = paramsFile,
                 ["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"] = "https://fallback.example.com/v1/logs",
                 ["OTEL_API_KEY"] = "fallback-secret"
             }))
             {
-                var parsed = LogsConfiguration.ReadSsmParameters();
+                var parsed = LogsConfiguration.ReadExporterParameters();
                 Assert.Equal("https://fallback.example.com/v1/logs", parsed.Otel?.Logs?.Url);
                 Assert.Equal("fallback-secret", parsed.Otel?.Logs?.ApiKey);
             }

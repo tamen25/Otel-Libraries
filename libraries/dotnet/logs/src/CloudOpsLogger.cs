@@ -131,8 +131,8 @@ public sealed class CloudOpsLogger
             return;
         }
 
-        var ssmParameters = LogsConfiguration.ReadSsmParameters();
-        if (ssmParameters.IsEmpty())
+        var exporterParameters = LogsConfiguration.ReadExporterParameters();
+        if (exporterParameters.IsEmpty())
         {
             useConsole = true;
             return;
@@ -146,7 +146,7 @@ public sealed class CloudOpsLogger
                     useConsole = true;
                     break;
                 case "otel":
-                    InitOtelLogger(ssmParameters);
+                    InitOtelLogger(exporterParameters);
                     break;
                 default:
                     useConsole = true;
@@ -156,10 +156,10 @@ public sealed class CloudOpsLogger
     }
 
     // Initializes OTel logger.
-    private void InitOtelLogger(SsmParameters? ssmParameters = null)
+    private void InitOtelLogger(ExporterParameters? exporterParameters = null)
     {
-        ssmParameters ??= LogsConfiguration.ReadSsmParameters();
-        var config = ssmParameters.Backend("otel")?.Logs;
+        exporterParameters ??= LogsConfiguration.ReadExporterParameters();
+        var config = exporterParameters.Backend("otel")?.Logs;
         if (config is null)
         {
             useConsole = true;
@@ -221,9 +221,6 @@ public sealed class CloudOpsLogger
     // Gets current trace ID.
     private static string CurrentTraceId()
     {
-        var lambdaTraceId = Environment.GetEnvironmentVariable("_X_AMZN_TRACE_ID");
-        if (!string.IsNullOrWhiteSpace(lambdaTraceId)) return lambdaTraceId;
-
         var activity = System.Diagnostics.Activity.Current;
         return activity?.TraceId.ToString() ?? "unknown";
     }

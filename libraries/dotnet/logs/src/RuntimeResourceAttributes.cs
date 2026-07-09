@@ -4,6 +4,7 @@ namespace CloudOps.Otel.Logs;
 public static class RuntimeResourceAttributes
 {
     private const string AttrServiceName = "service.name";
+    private const string AttrCloudProvider = "cloud.provider";
     private const string AttrCloudPlatform = "cloud.platform";
     private const string AttrContainerId = "container.id";
     private const string AttrContainerName = "container.name";
@@ -20,7 +21,7 @@ public static class RuntimeResourceAttributes
         attributes[AttrServiceName] = FirstValue(
             Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME"),
             attributes.GetValueOrDefault(AttrServiceName),
-            Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME"),
+            Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME"),
             "unknown_service");
         attributes["pe-lib-log-ver"] = "1.16.2";
 
@@ -31,22 +32,32 @@ public static class RuntimeResourceAttributes
     // Adds runtime attributes.
     private static void AddRuntimeAttributes(Dictionary<string, string> attributes)
     {
-        var lambdaName = Environment.GetEnvironmentVariable("AWS_LAMBDA_FUNCTION_NAME");
-        if (HasValue(lambdaName))
+        if (HasValue(FirstEnv("FUNCTIONS_EXTENSION_VERSION", "FUNCTIONS_WORKER_RUNTIME")))
         {
-            attributes[AttrCloudPlatform] = "aws_lambda";
-            attributes[AttrFaasName] = lambdaName!;
+            attributes[AttrCloudProvider] = "azure";
+            attributes[AttrCloudPlatform] = "azure_functions";
+            var siteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+            if (HasValue(siteName))
+            {
+                attributes[AttrFaasName] = siteName!;
+            }
             return;
         }
 
-        if (HasValue(FirstEnv("ECS_CONTAINER_METADATA_URI_V4", "ECS_CONTAINER_METADATA_URI"))
-            || HasValue(Environment.GetEnvironmentVariable("ECS_CONTAINER_METADATA_FILE")))
+        if (HasValue(Environment.GetEnvironmentVariable("CONTAINER_APP_NAME")))
         {
-            attributes[AttrCloudPlatform] = "aws_ecs";
+            attributes[AttrCloudProvider] = "azure";
+            attributes[AttrCloudPlatform] = "azure_container_apps";
+        }
+
+        if (HasValue(Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME")))
+        {
+            attributes[AttrCloudProvider] = "azure";
+            attributes[AttrCloudPlatform] = "azure_app_service";
         }
 
         var runningOnKubernetes = HasValue(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST"));
-        var k8sClusterName = FirstEnv("K8S_CLUSTER_NAME", "EKS_CLUSTER_NAME");
+        var k8sClusterName = FirstEnv("K8S_CLUSTER_NAME", "AKS_CLUSTER_NAME");
         var k8sNamespaceName = FirstEnv("K8S_NAMESPACE_NAME", "POD_NAMESPACE");
         var k8sNodeName = FirstEnv("K8S_NODE_NAME", "NODE_NAME");
         var k8sPodName = FirstEnv("K8S_POD_NAME", "POD_NAME");
@@ -57,7 +68,8 @@ public static class RuntimeResourceAttributes
 
         if (runningOnKubernetes || HasValue(k8sClusterName) || HasValue(k8sNamespaceName) || HasValue(k8sPodName))
         {
-            attributes[AttrCloudPlatform] = "aws_eks";
+            attributes[AttrCloudProvider] = "azure";
+            attributes[AttrCloudPlatform] = "azure_aks";
         }
 
         PutIfPresent(attributes, AttrK8sClusterName, k8sClusterName);
@@ -65,7 +77,7 @@ public static class RuntimeResourceAttributes
         PutIfPresent(attributes, AttrK8sNodeName, k8sNodeName);
         PutIfPresent(attributes, AttrK8sPodName, k8sPodName);
         PutIfPresent(attributes, AttrContainerId, Environment.GetEnvironmentVariable("CONTAINER_ID"));
-        PutIfPresent(attributes, AttrContainerName, FirstEnv("CONTAINER_NAME", "ECS_CONTAINER_NAME"));
+        PutIfPresent(attributes, AttrContainerName, FirstEnv("CONTAINER_NAME", "CONTAINER_APP_NAME"));
     }
 
     // Parses resource attributes.

@@ -1,9 +1,9 @@
-// This file contains SSM parameters logic for logs src.
+// This file contains exporter parameters logic for logs src.
 using System.Text.Json.Serialization;
 
 namespace CloudOps.Otel.Logs;
 
-public sealed class SsmParameters
+public sealed class ExporterParameters
 {
     [JsonPropertyName("otel")]
     public BackendConfig? Otel { get; set; }
