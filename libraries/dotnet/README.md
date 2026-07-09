@@ -8,4 +8,4 @@ Published package names:
 - `CloudOps.Otel.Logs`
 
 Publishing is handled by `.github/workflows/libraries.yml`, which authenticates
-to AWS CodeArtifact and runs `scripts/publish-dotnet-packages.sh`.
+to Azure Artifacts and runs `scripts/publish-dotnet-packages.sh`.

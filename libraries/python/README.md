@@ -8,4 +8,4 @@ Published package names:
 - `cloudops-otel-logs`
 
 Publishing is handled by `.github/workflows/libraries.yml`, which authenticates
-to AWS CodeArtifact and runs `scripts/publish-python-packages.sh`.
+to Azure Artifacts and runs `scripts/publish-python-packages.sh`.

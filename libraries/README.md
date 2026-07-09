@@ -1,8 +1,8 @@
 <!-- This document explains readme for CloudOps. -->
 # CloudOps Client Libraries
 
-Internal client libraries live here before they are published to AWS
-CodeArtifact.
+Internal client libraries live here before they are published to Azure
+Artifacts.
 
 Current scope:
 
@@ -22,7 +22,7 @@ libraries/<language>/<signal>/
 ```
 
 The library pipeline publishes npm, Maven, NuGet, and Python packages to
-language-specific AWS CodeArtifact repositories. Go and C++ packages are
+language-specific Azure Artifacts feeds. Go and C++ packages are
 validated in CI while their artifact publishing path is finalized. All ports
 honor the same `OTEL_*` env-var contract documented in each library's README.
 Use the `publish_languages` workflow input, or the `LIBRARY_PUBLISH_LANGUAGES`

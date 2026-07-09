@@ -40,11 +40,11 @@ in one language, apply the equivalent change to the others:
   keyed by invocation id; a batch is always emitted if it contains an `error`,
   otherwise it is sampled at `OTEL_LOGS_SAMPLING_RATE`.
 - `LogEntry` / `LogBatch` — data carriers.
-- `LogsExporterConfig` / `BackendConfig` / `SsmParameters` — exporter config,
-  resolved from env vars, an inline `OTEL_SSM_PARAMETERS` JSON blob, or the
-  SSM parameters file (`/tmp/otelExporterParams.json` by default).
+- `LogsExporterConfig` / `BackendConfig` / `ExporterParameters` — exporter config,
+  resolved from env vars, an inline `OTEL_EXPORTER_PARAMETERS` JSON blob, or the
+  exporter parameters file (`/tmp/otelExporterParams.json` by default).
 - `RuntimeResourceAttributes` — derives OTel resource attributes and detects the
-  AWS runtime (Lambda / ECS / EKS / plain Kubernetes) from env vars.
+  Azure runtime (Functions / Container Apps / App Service / AKS) from env vars.
 - `LogsConfiguration` (Java/.NET) — configuration surface.
 
 Exporters: `console` (default) and `otel` (OTLP/HTTP). If OTel deps or exporter
@@ -60,11 +60,11 @@ config are unavailable, ports fall back to console.
 - `OTEL_API_KEY` / `OTEL_EXPORTER_OTLP_HEADERS` — auth (sent as
   `authorization: Bearer <key>`).
 - `OTEL_SERVICE_NAME` / `OTEL_RESOURCE_ATTRIBUTES` — resource identity.
-- `OTEL_SSM_PARAMETERS` (inline JSON) / `OTEL_SSM_PARAMETERS_FILE` — exporter
+- `OTEL_EXPORTER_PARAMETERS` (inline JSON) / `OTEL_EXPORTER_PARAMETERS_FILE` — exporter
   config source; falls back to `/tmp/otelExporterParams.json`.
 
-AWS runtime auto-detection uses `AWS_LAMBDA_FUNCTION_NAME`,
-`ECS_CONTAINER_METADATA_URI*`, `KUBERNETES_SERVICE_HOST`, `K8S_*`/`POD_*`, etc.
+Azure runtime auto-detection uses `FUNCTIONS_EXTENSION_VERSION`/`FUNCTIONS_WORKER_RUNTIME`,
+`WEBSITE_SITE_NAME`, `CONTAINER_APP_NAME`, `KUBERNETES_SERVICE_HOST`, `K8S_*`/`POD_*`, etc.
 
 ## Build & test
 
@@ -121,5 +121,5 @@ OTel SDK versions in use: Python `1.41.0`, Java (`${otel.version}` in pom),
 
 Extracted from the `CloudOps` monorepo's `libraries/` tree (which also has
 Node.js, Go, and C++ ports plus a full Terraform/infra stack). Publishing in the
-original repo went to AWS CodeArtifact via GitHub Actions; that pipeline was
+original repo went to Azure Artifacts via GitHub Actions; that pipeline was
 **not** copied here. This project is source-only for library development.
