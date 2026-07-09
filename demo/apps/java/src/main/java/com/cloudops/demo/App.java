@@ -16,6 +16,8 @@ public final class App {
   private static final String DOTNET_URL =
       System.getenv().getOrDefault("DOTNET_URL", "http://dotnet-app:8081/finalize");
   private static final HttpClient CLIENT = HttpClient.newHttpClient();
+  private static final java.util.concurrent.atomic.AtomicLong COUNT =
+      new java.util.concurrent.atomic.AtomicLong();
 
   public static void main(String[] args) throws IOException {
     HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
@@ -29,7 +31,11 @@ public final class App {
   private static void process(com.sun.net.httpserver.HttpExchange ex) throws IOException {
     String query = ex.getRequestURI().getQuery();
     String orderId = query != null && query.startsWith("order_id=") ? query.substring(9) : "unknown";
+    LOG.debug("validating order", "order_id", orderId, "hop", "java");
     LOG.info("processing order", "order_id", orderId, "hop", "java");
+    if (COUNT.incrementAndGet() % 5 == 0) {
+      LOG.warn("downstream latency high (simulated)", "order_id", orderId, "count", COUNT.get());
+    }
     try {
       HttpRequest req = HttpRequest.newBuilder()
           .uri(URI.create(DOTNET_URL + "?order_id=" + orderId)).GET().build();

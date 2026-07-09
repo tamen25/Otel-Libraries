@@ -9,6 +9,7 @@ from cloudops_otel_logs import logger
 
 app = Flask(__name__)
 JAVA_URL = os.getenv("JAVA_URL", "http://java-app:8080/process")
+_order_count = 0
 
 
 @app.get("/health")
@@ -18,8 +19,13 @@ def health():
 
 @app.get("/order")
 def order():
+    global _order_count
+    _order_count += 1
     order_id = str(uuid.uuid4())
+    logger.debug("validating order", {"order_id": order_id, "hop": "python"})
     logger.info("order received", {"order_id": order_id, "hop": "python"})
+    if _order_count % 5 == 0:
+        logger.warn("order backlog high (simulated)", {"order_id": order_id, "backlog": _order_count})
     try:
         resp = requests.get(JAVA_URL, params={"order_id": order_id}, timeout=5)
         logger.info("java responded", {"order_id": order_id, "status": resp.status_code})

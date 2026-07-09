@@ -48,7 +48,8 @@ services:
     environment:
       OTEL_SERVICE_NAME: python-app
       OTEL_BACKEND_EXPORTERS: otel
-      OTEL_LOG_LEVEL: info,warn,error,debug
+      OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
+      OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       JAVA_URL: http://java-app:8080/process
     restart: unless-stopped
@@ -62,7 +63,8 @@ services:
     environment:
       OTEL_SERVICE_NAME: java-app
       OTEL_BACKEND_EXPORTERS: otel
-      OTEL_LOG_LEVEL: info,warn,error,debug
+      OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
+      OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       DOTNET_URL: http://dotnet-app:8081/finalize
     restart: unless-stopped
@@ -76,7 +78,8 @@ services:
     environment:
       OTEL_SERVICE_NAME: dotnet-app
       OTEL_BACKEND_EXPORTERS: otel
-      OTEL_LOG_LEVEL: info,warn,error,debug
+      OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
+      OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     restart: unless-stopped
     depends_on:
