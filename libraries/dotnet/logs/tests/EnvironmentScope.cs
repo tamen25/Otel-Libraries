@@ -18,10 +18,8 @@ internal sealed class EnvironmentScope : IDisposable
         "K8S_POD_NAME",
         "KUBERNETES_SERVICE_HOST",
         "NODE_NAME",
-        "OTEL_API_KEY",
         "OTEL_BACKEND_EXPORTERS",
         "OTEL_EXPORTER_OTLP_ENDPOINT",
-        "OTEL_EXPORTER_OTLP_HEADERS",
         "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
         "OTEL_EXPORTER_PARAMETERS",
         "OTEL_EXPORTER_PARAMETERS_FILE",
@@ -31,7 +29,8 @@ internal sealed class EnvironmentScope : IDisposable
         "OTEL_SERVICE_NAME",
         "POD_NAME",
         "POD_NAMESPACE",
-        "WEBSITE_SITE_NAME"
+        "WEBSITE_SITE_NAME",
+        "X_ORG_ID"
     ];
 
     private readonly Dictionary<string, string?> previousValues = new(StringComparer.Ordinal);

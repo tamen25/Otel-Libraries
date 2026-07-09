@@ -8,7 +8,7 @@ public final class ExporterParameters {
 
   // Checks whether empty.
   public boolean isEmpty() {
-    return otel == null || otel.logs == null || (!hasValue(otel.logs.url) && !hasValue(otel.logs.apiKey));
+    return otel == null || otel.logs == null || !hasValue(otel.logs.url);
   }
 
   // Handles has value.

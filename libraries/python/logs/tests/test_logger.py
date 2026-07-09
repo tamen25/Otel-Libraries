@@ -138,42 +138,36 @@ class CloudOpsLoggerTests(unittest.TestCase):
     #Handles test read exporter parameters prefers JSON and falls back to OTel env.
     def test_read_exporter_parameters_prefers_json_and_falls_back_to_otel_env(self):
         with patch.dict("os.environ", {
-            "OTEL_EXPORTER_PARAMETERS": '{"otel":{"logs":{"url":"https://collector.example.com/v1/logs","api_key":"secret"}}}',
+            "OTEL_EXPORTER_PARAMETERS": '{"otel":{"logs":{"url":"https://collector.example.com/v1/logs"}}}',
             "OTEL_EXPORTER_OTLP_ENDPOINT": "https://fallback.example.com",
-            "OTEL_API_KEY": "fallback-secret",
         }, clear=True):
             parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://collector.example.com/v1/logs")
-        self.assertEqual(parsed.otel.logs.api_key, "secret")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             with patch.dict("os.environ", {
                 "OTEL_EXPORTER_PARAMETERS_FILE": os.path.join(temp_dir, "missing.json"),
                 "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.example.com/",
-                "OTEL_API_KEY": "direct-secret",
             }, clear=True):
                 parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://collector.example.com/v1/logs")
-        self.assertEqual(parsed.otel.logs.api_key, "direct-secret")
 
     #Handles test read exporter parameters uses params file before direct env.
     def test_read_exporter_parameters_uses_params_file_before_direct_env(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             params_file = os.path.join(temp_dir, "otelExporterParams.json")
             with open(params_file, "w", encoding="utf-8") as file:
-                file.write('{"otel":{"logs":{"url":"https://file.example.com/v1/logs","api_key":"file-secret"}}}')
+                file.write('{"otel":{"logs":{"url":"https://file.example.com/v1/logs"}}}')
 
             with patch.dict("os.environ", {
                 "OTEL_EXPORTER_PARAMETERS_FILE": params_file,
                 "OTEL_EXPORTER_OTLP_ENDPOINT": "https://fallback.example.com",
-                "OTEL_API_KEY": "fallback-secret",
             }, clear=True):
                 parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://file.example.com/v1/logs")
-        self.assertEqual(parsed.otel.logs.api_key, "file-secret")
 
     #Handles test read exporter parameters falls back when params file is invalid.
     def test_read_exporter_parameters_falls_back_when_params_file_is_invalid(self):
@@ -185,12 +179,10 @@ class CloudOpsLoggerTests(unittest.TestCase):
             with patch.dict("os.environ", {
                 "OTEL_EXPORTER_PARAMETERS_FILE": params_file,
                 "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT": "https://fallback.example.com/v1/logs",
-                "OTEL_API_KEY": "fallback-secret",
             }, clear=True):
                 parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://fallback.example.com/v1/logs")
-        self.assertEqual(parsed.otel.logs.api_key, "fallback-secret")
 
     #Handles test console logger renders enabled messages.
     def test_console_logger_renders_enabled_messages(self):

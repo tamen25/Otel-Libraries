@@ -169,8 +169,9 @@ public final class CloudOpsLogger {
     if (LogsConfiguration.hasValue(backendConfig.logs.url)) {
       exporterBuilder.setEndpoint(backendConfig.logs.url);
     }
-    if (LogsConfiguration.hasValue(backendConfig.logs.apiKey)) {
-      exporterBuilder.addHeader("authorization", "Bearer " + backendConfig.logs.apiKey);
+    String orgId = System.getenv("X_ORG_ID");
+    if (LogsConfiguration.hasValue(orgId)) {
+      exporterBuilder.addHeader("X-OrgId", orgId);
     }
 
     LogRecordProcessor processor = BatchLogRecordProcessor.builder(exporterBuilder.build()).build();

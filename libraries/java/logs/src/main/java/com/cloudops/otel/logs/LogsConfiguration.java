@@ -33,15 +33,11 @@ final class LogsConfiguration {
     String logsUrl = firstValue(
         System.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"),
         normalizeEndpoint(System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")));
-    String apiKey = firstValue(
-        System.getenv("OTEL_API_KEY"),
-        System.getenv("OTEL_EXPORTER_OTLP_HEADERS"));
 
     ExporterParameters parameters = new ExporterParameters();
-    if (hasValue(logsUrl) || hasValue(apiKey)) {
+    if (hasValue(logsUrl)) {
       LogsExporterConfig exporterConfig = new LogsExporterConfig();
       exporterConfig.url = logsUrl;
-      exporterConfig.apiKey = apiKey;
 
       BackendConfig backendConfig = new BackendConfig();
       backendConfig.logs = exporterConfig;

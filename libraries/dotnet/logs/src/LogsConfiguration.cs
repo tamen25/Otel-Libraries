@@ -35,19 +35,15 @@ internal static class LogsConfiguration
         var logsUrl = FirstValue(
             Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"),
             NormalizeEndpoint(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")));
-        var apiKey = FirstValue(
-            Environment.GetEnvironmentVariable("OTEL_API_KEY"),
-            Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_HEADERS"));
 
         var parameters = new ExporterParameters();
-        if (HasValue(logsUrl) || HasValue(apiKey))
+        if (HasValue(logsUrl))
         {
             parameters.Otel = new BackendConfig
             {
                 Logs = new LogsExporterConfig
                 {
-                    Url = logsUrl,
-                    ApiKey = apiKey
+                    Url = logsUrl
                 }
             };
         }

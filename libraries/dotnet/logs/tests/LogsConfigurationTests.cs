@@ -30,27 +30,23 @@ public sealed class LogsConfigurationTests
     {
         using (new EnvironmentScope(new Dictionary<string, string?>
         {
-            ["OTEL_EXPORTER_PARAMETERS"] = """{"otel":{"logs":{"url":"https://collector.example.com/v1/logs","api_key":"secret"}}}""",
-            ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com",
-            ["OTEL_API_KEY"] = "fallback-secret"
+            ["OTEL_EXPORTER_PARAMETERS"] = """{"otel":{"logs":{"url":"https://collector.example.com/v1/logs"}}}""",
+            ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com"
         }))
         {
             var parsed = LogsConfiguration.ReadExporterParameters();
             Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-            Assert.Equal("secret", parsed.Otel?.Logs?.ApiKey);
         }
 
         using (new EnvironmentScope(new Dictionary<string, string?>
         {
             ["OTEL_EXPORTER_PARAMETERS"] = null,
             ["OTEL_EXPORTER_PARAMETERS_FILE"] = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json"),
-            ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://collector.example.com/",
-            ["OTEL_API_KEY"] = "direct-secret"
+            ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://collector.example.com/"
         }))
         {
             var parsed = LogsConfiguration.ReadExporterParameters();
             Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-            Assert.Equal("direct-secret", parsed.Otel?.Logs?.ApiKey);
         }
     }
 
@@ -65,18 +61,16 @@ public sealed class LogsConfigurationTests
             var paramsFile = Path.Combine(tempDir.FullName, "otelExporterParams.json");
             File.WriteAllText(
                 paramsFile,
-                """{"otel":{"logs":{"url":"https://file.example.com/v1/logs","api_key":"file-secret"}}}""");
+                """{"otel":{"logs":{"url":"https://file.example.com/v1/logs"}}}""");
 
             using (new EnvironmentScope(new Dictionary<string, string?>
             {
                 ["OTEL_EXPORTER_PARAMETERS_FILE"] = paramsFile,
-                ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com",
-                ["OTEL_API_KEY"] = "fallback-secret"
+                ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com"
             }))
             {
                 var parsed = LogsConfiguration.ReadExporterParameters();
                 Assert.Equal("https://file.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-                Assert.Equal("file-secret", parsed.Otel?.Logs?.ApiKey);
             }
         }
         finally
@@ -99,13 +93,11 @@ public sealed class LogsConfigurationTests
             using (new EnvironmentScope(new Dictionary<string, string?>
             {
                 ["OTEL_EXPORTER_PARAMETERS_FILE"] = paramsFile,
-                ["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"] = "https://fallback.example.com/v1/logs",
-                ["OTEL_API_KEY"] = "fallback-secret"
+                ["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"] = "https://fallback.example.com/v1/logs"
             }))
             {
                 var parsed = LogsConfiguration.ReadExporterParameters();
                 Assert.Equal("https://fallback.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-                Assert.Equal("fallback-secret", parsed.Otel?.Logs?.ApiKey);
             }
         }
         finally

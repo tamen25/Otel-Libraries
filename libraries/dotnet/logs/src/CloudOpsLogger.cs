@@ -183,9 +183,10 @@ public sealed class CloudOpsLogger
                     {
                         exporterOptions.Endpoint = new Uri(config.Url!);
                     }
-                    if (LogsConfiguration.HasValue(config.ApiKey))
+                    var orgId = Environment.GetEnvironmentVariable("X_ORG_ID");
+                    if (LogsConfiguration.HasValue(orgId))
                     {
-                        exporterOptions.Headers = $"authorization=Bearer {config.ApiKey}";
+                        exporterOptions.Headers = $"X-OrgId={orgId}";
                     }
                 });
             });

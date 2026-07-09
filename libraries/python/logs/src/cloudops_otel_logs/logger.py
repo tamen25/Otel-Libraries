@@ -39,7 +39,6 @@ DEFAULT_EXPORTER_PARAMETERS_FILE = "/tmp/otelExporterParams.json"
 @dataclass
 class LogsExporterConfig:
     url: str | None = None
-    api_key: str | None = None
 
 
 @dataclass
@@ -53,7 +52,7 @@ class ExporterParameters:
 
     #Checks whether empty.
     def is_empty(self) -> bool:
-        return self.otel is None or self.otel.logs is None or not (self.otel.logs.url or self.otel.logs.api_key)
+        return self.otel is None or self.otel.logs is None or not self.otel.logs.url
 
     #Handles backend.
     def backend(self, name: str) -> BackendConfig | None:
@@ -134,7 +133,6 @@ def _exporter_parameters_from_json(parsed: Any) -> ExporterParameters:
     logs = logs if isinstance(logs, Mapping) else {}
     return ExporterParameters(otel=BackendConfig(logs=LogsExporterConfig(
         url=logs.get("url"),
-        api_key=logs.get("api_key"),
     )))
 
 
@@ -167,9 +165,8 @@ def _read_exporter_parameters() -> ExporterParameters:
         return file_parameters
 
     logs_url = os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT") or _normalize_endpoint(os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
-    api_key = os.getenv("OTEL_API_KEY") or os.getenv("OTEL_EXPORTER_OTLP_HEADERS")
-    if logs_url or api_key:
-        return ExporterParameters(otel=BackendConfig(logs=LogsExporterConfig(url=logs_url, api_key=api_key)))
+    if logs_url:
+        return ExporterParameters(otel=BackendConfig(logs=LogsExporterConfig(url=logs_url)))
 
     return ExporterParameters()
 
@@ -389,8 +386,9 @@ class CloudOpsLogger:
         exporter_options: dict[str, Any] = {}
         if config.url:
             exporter_options["endpoint"] = config.url
-        if config.api_key:
-            exporter_options["headers"] = {"authorization": f"Bearer {config.api_key}"}
+        org_id = os.getenv("X_ORG_ID")
+        if org_id:
+            exporter_options["headers"] = {"X-OrgId": org_id}
         exporter = OTLPLogExporter(**exporter_options)
         self._logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
         set_logger_provider(self._logger_provider)

@@ -11,8 +11,7 @@ public sealed class ExporterParameters
     // Checks whether empty.
     public bool IsEmpty()
     {
-        return Otel?.Logs == null
-            || (string.IsNullOrWhiteSpace(Otel.Logs.Url) && string.IsNullOrWhiteSpace(Otel.Logs.ApiKey));
+        return Otel?.Logs == null || string.IsNullOrWhiteSpace(Otel.Logs.Url);
     }
 
     // Handles backend.

@@ -46,13 +46,12 @@ class LogsConfigurationTest {
     Path paramsFile = tempDir.resolve("otelExporterParams.json");
     Files.writeString(
         paramsFile,
-        "{\"otel\":{\"logs\":{\"url\":\"https://file.example.com/v1/logs\",\"api_key\":\"file-secret\"}}}");
+        "{\"otel\":{\"logs\":{\"url\":\"https://file.example.com/v1/logs\"}}}");
 
     ExporterParameters parsed = LogsConfiguration.readExporterParametersFile(paramsFile);
 
     assertFalse(parsed.isEmpty());
     assertEquals("https://file.example.com/v1/logs", parsed.otel.logs.url);
-    assertEquals("file-secret", parsed.otel.logs.apiKey);
   }
 
   @Test

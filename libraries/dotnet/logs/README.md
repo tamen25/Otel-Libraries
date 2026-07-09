@@ -22,7 +22,7 @@ Configuration matches the Node.js logs library:
 - `OTEL_BACKEND_EXPORTERS`: JSON array or comma-separated list. Defaults to `console`.
 - `OTEL_LOG_LEVEL`: JSON array or comma-separated list of `info`, `error`, `debug`, `warn`.
 - `OTEL_LOGS_SAMPLING_RATE`: percentage from `0` to `100`. Error logs are always exported.
-- `OTEL_EXPORTER_PARAMETERS`: JSON object with `otel.logs.url` and `otel.logs.api_key`.
+- `OTEL_EXPORTER_PARAMETERS`: JSON object with `otel.logs.url`.
 - `/tmp/otelExporterParams.json`: parameter file fallback. Set `OTEL_EXPORTER_PARAMETERS_FILE` to override the path.
 - `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT`: OTLP HTTP endpoint fallback.
-- `OTEL_API_KEY` or `OTEL_EXPORTER_OTLP_HEADERS`: OTLP auth fallback.
+- `X_ORG_ID`: authentication key, sent on every OTLP export as the `X-OrgId` header.

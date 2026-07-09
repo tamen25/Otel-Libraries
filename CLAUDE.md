@@ -57,8 +57,7 @@ config are unavailable, ports fall back to console.
 - `OTEL_LOGS_SAMPLING_RATE` — 0–100 (default 100 = emit everything).
 - `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` / `OTEL_EXPORTER_OTLP_ENDPOINT` — endpoint
   (the plain endpoint is normalised to end in `/v1/logs`).
-- `OTEL_API_KEY` / `OTEL_EXPORTER_OTLP_HEADERS` — auth (sent as
-  `authorization: Bearer <key>`).
+- `X_ORG_ID` — auth (sent as the `X-OrgId` header on every OTLP export).
 - `OTEL_SERVICE_NAME` / `OTEL_RESOURCE_ATTRIBUTES` — resource identity.
 - `OTEL_EXPORTER_PARAMETERS` (inline JSON) / `OTEL_EXPORTER_PARAMETERS_FILE` — exporter
   config source; falls back to `/tmp/otelExporterParams.json`.
