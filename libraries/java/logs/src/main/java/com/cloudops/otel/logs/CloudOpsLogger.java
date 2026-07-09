@@ -160,19 +160,16 @@ public final class CloudOpsLogger {
   // Initializes OTel.
   private void initialiseOtel(ExporterParameters exporterParameters) {
     BackendConfig backendConfig = exporterParameters.backend("otel");
-    if (backendConfig == null || backendConfig.logs == null) {
+    String orgId = LogsConfiguration.orgId();
+    if (backendConfig == null || backendConfig.logs == null
+        || !LogsConfiguration.hasValue(backendConfig.logs.url) || !LogsConfiguration.hasValue(orgId)) {
       useConsole = true;
       return;
     }
 
     var exporterBuilder = OtlpHttpLogRecordExporter.builder();
-    if (LogsConfiguration.hasValue(backendConfig.logs.url)) {
-      exporterBuilder.setEndpoint(backendConfig.logs.url);
-    }
-    String orgId = System.getenv("X_ORG_ID");
-    if (LogsConfiguration.hasValue(orgId)) {
-      exporterBuilder.addHeader("X-OrgId", orgId);
-    }
+    exporterBuilder.setEndpoint(backendConfig.logs.url);
+    exporterBuilder.addHeader("X-OrgId", orgId);
 
     LogRecordProcessor processor = BatchLogRecordProcessor.builder(exporterBuilder.build()).build();
     loggerProvider = SdkLoggerProvider.builder()

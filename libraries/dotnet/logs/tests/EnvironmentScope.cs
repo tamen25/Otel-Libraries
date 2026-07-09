@@ -22,7 +22,6 @@ internal sealed class EnvironmentScope : IDisposable
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
         "OTEL_EXPORTER_PARAMETERS",
-        "OTEL_EXPORTER_PARAMETERS_FILE",
         "OTEL_LOG_LEVEL",
         "OTEL_LOGS_SAMPLING_RATE",
         "OTEL_RESOURCE_ATTRIBUTES",

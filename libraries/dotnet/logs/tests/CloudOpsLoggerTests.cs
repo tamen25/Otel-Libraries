@@ -45,4 +45,62 @@ public sealed class CloudOpsLoggerTests
         Assert.Contains("order_id", rendered);
         Assert.DoesNotContain("debug should be disabled", rendered);
     }
+
+    [Fact]
+    // Handles otel requested without X_ORG_ID falling back to console.
+    public void OtelWithoutOrgIdFallsBackToConsole()
+    {
+        using var env = new EnvironmentScope(new Dictionary<string, string?>
+        {
+            ["OTEL_BACKEND_EXPORTERS"] = "otel",
+            ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://collector.example.com",
+            ["OTEL_LOGS_SAMPLING_RATE"] = "0"
+        });
+
+        var originalOut = Console.Out;
+        using var output = new StringWriter();
+        Console.SetOut(output);
+
+        try
+        {
+            var logger = new CloudOpsLogger();
+            logger.Info("gated to console");
+            logger.ExportLogs();
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        Assert.Contains("gated to console", output.ToString());
+    }
+
+    [Fact]
+    // Handles otel with endpoint and X_ORG_ID not writing to console.
+    public void OtelWithEndpointAndOrgIdDoesNotUseConsole()
+    {
+        using var env = new EnvironmentScope(new Dictionary<string, string?>
+        {
+            ["OTEL_BACKEND_EXPORTERS"] = "otel",
+            ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://collector.example.com",
+            ["X_ORG_ID"] = "org-123",
+            ["OTEL_LOGS_SAMPLING_RATE"] = "0"
+        });
+
+        var originalOut = Console.Out;
+        using var output = new StringWriter();
+        Console.SetOut(output);
+
+        try
+        {
+            var logger = new CloudOpsLogger();
+            logger.Info("should go to otel");
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        Assert.DoesNotContain("should go to otel", output.ToString());
+    }
 }

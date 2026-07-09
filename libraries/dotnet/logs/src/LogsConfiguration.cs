@@ -5,7 +5,11 @@ namespace CloudOps.Otel.Logs;
 
 internal static class LogsConfiguration
 {
-    private const string DefaultExporterParametersFile = "/tmp/otelExporterParams.json";
+    // Hardcoded fallbacks for the OTLP logs endpoint and org id. Env vars override
+    // these; leave them empty to fall back to console. X_ORG_ID is required for OTLP
+    // export no matter what — without it the logger always uses console.
+    public const string DefaultLogsEndpoint = "";
+    public const string DefaultXOrgId = "";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -25,16 +29,14 @@ internal static class LogsConfiguration
             }
             catch (JsonException)
             {
-                // Fall through to the params file and then direct OTEL env vars.
+                // Fall through to the direct OTEL env vars and the hardcoded default.
             }
         }
 
-        var fileParameters = ReadExporterParametersFile();
-        if (!fileParameters.IsEmpty()) return fileParameters;
-
         var logsUrl = FirstValue(
             Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"),
-            NormalizeEndpoint(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")));
+            NormalizeEndpoint(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")),
+            DefaultLogsEndpoint);
 
         var parameters = new ExporterParameters();
         if (HasValue(logsUrl))
@@ -51,27 +53,10 @@ internal static class LogsConfiguration
         return parameters;
     }
 
-    // Reads exporter parameters file.
-    public static ExporterParameters ReadExporterParametersFile(string? filePath = null)
+    // Resolves org id.
+    public static string? OrgId()
     {
-        var resolvedPath = HasValue(filePath)
-            ? filePath
-            : FirstValue(Environment.GetEnvironmentVariable("OTEL_EXPORTER_PARAMETERS_FILE"), DefaultExporterParametersFile);
-
-        try
-        {
-            using var stream = File.OpenRead(resolvedPath!);
-            return JsonSerializer.Deserialize<ExporterParameters>(stream, JsonOptions) ?? new ExporterParameters();
-        }
-        catch (Exception error) when (
-            error is FileNotFoundException
-            || error is DirectoryNotFoundException
-            || error is IOException
-            || error is JsonException
-            || error is UnauthorizedAccessException)
-        {
-            return new ExporterParameters();
-        }
+        return FirstValue(Environment.GetEnvironmentVariable("X_ORG_ID"), DefaultXOrgId);
     }
 
     // Parses string array.

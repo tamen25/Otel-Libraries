@@ -41,14 +41,17 @@ in one language, apply the equivalent change to the others:
   otherwise it is sampled at `OTEL_LOGS_SAMPLING_RATE`.
 - `LogEntry` / `LogBatch` — data carriers.
 - `LogsExporterConfig` / `BackendConfig` / `ExporterParameters` — exporter config,
-  resolved from env vars, an inline `OTEL_EXPORTER_PARAMETERS` JSON blob, or the
-  exporter parameters file (`/tmp/otelExporterParams.json` by default).
+  resolved from env vars or an inline `OTEL_EXPORTER_PARAMETERS` JSON blob (no
+  secrets file). OTLP export needs both a resolved endpoint URL and `X_ORG_ID`,
+  else it falls back to console.
 - `RuntimeResourceAttributes` — derives OTel resource attributes and detects the
   Azure runtime (Functions / Container Apps / App Service / AKS) from env vars.
 - `LogsConfiguration` (Java/.NET) — configuration surface.
 
-Exporters: `console` (default) and `otel` (OTLP/HTTP). If OTel deps or exporter
-config are unavailable, ports fall back to console.
+Exporters: `console` (default) and `otel` (OTLP/HTTP). The `otel` exporter is used
+only when both an endpoint URL and `X_ORG_ID` resolve (from env or the hardcoded
+`DEFAULT_*` constants); otherwise — or if OTel deps are unavailable — ports fall
+back to console.
 
 ### `OTEL_*` env-var contract (identical across languages)
 
@@ -57,10 +60,10 @@ config are unavailable, ports fall back to console.
 - `OTEL_LOGS_SAMPLING_RATE` — 0–100 (default 100 = emit everything).
 - `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` / `OTEL_EXPORTER_OTLP_ENDPOINT` — endpoint
   (the plain endpoint is normalised to end in `/v1/logs`).
-- `X_ORG_ID` — auth (sent as the `X-OrgId` header on every OTLP export).
+- `X_ORG_ID` — auth (sent as the `X-OrgId` header on every OTLP export; required
+  for `otel`, else console).
 - `OTEL_SERVICE_NAME` / `OTEL_RESOURCE_ATTRIBUTES` — resource identity.
-- `OTEL_EXPORTER_PARAMETERS` (inline JSON) / `OTEL_EXPORTER_PARAMETERS_FILE` — exporter
-  config source; falls back to `/tmp/otelExporterParams.json`.
+- `OTEL_EXPORTER_PARAMETERS` (inline JSON) — exporter config source (`otel.logs.url`).
 
 Azure runtime auto-detection uses `FUNCTIONS_EXTENSION_VERSION`/`FUNCTIONS_WORKER_RUNTIME`,
 `WEBSITE_SITE_NAME`, `CONTAINER_APP_NAME`, `KUBERNETES_SERVICE_HOST`, `K8S_*`/`POD_*`, etc.

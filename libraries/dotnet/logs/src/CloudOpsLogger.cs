@@ -160,7 +160,8 @@ public sealed class CloudOpsLogger
     {
         exporterParameters ??= LogsConfiguration.ReadExporterParameters();
         var config = exporterParameters.Backend("otel")?.Logs;
-        if (config is null)
+        var orgId = LogsConfiguration.OrgId();
+        if (config is null || !LogsConfiguration.HasValue(config.Url) || !LogsConfiguration.HasValue(orgId))
         {
             useConsole = true;
             return;
@@ -179,15 +180,8 @@ public sealed class CloudOpsLogger
                 options.AddOtlpExporter(exporterOptions =>
                 {
                     exporterOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
-                    if (LogsConfiguration.HasValue(config.Url))
-                    {
-                        exporterOptions.Endpoint = new Uri(config.Url!);
-                    }
-                    var orgId = Environment.GetEnvironmentVariable("X_ORG_ID");
-                    if (LogsConfiguration.HasValue(orgId))
-                    {
-                        exporterOptions.Headers = $"X-OrgId={orgId}";
-                    }
+                    exporterOptions.Endpoint = new Uri(config.Url!);
+                    exporterOptions.Headers = $"X-OrgId={orgId}";
                 });
             });
         });

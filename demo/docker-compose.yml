@@ -51,6 +51,7 @@ services:
       OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
       OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
       JAVA_URL: http://java-app:8080/process
     restart: unless-stopped
     depends_on:
@@ -66,6 +67,7 @@ services:
       OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
       OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
       DOTNET_URL: http://dotnet-app:8081/finalize
     restart: unless-stopped
     depends_on:
@@ -81,6 +83,7 @@ services:
       OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
       OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
     restart: unless-stopped
     depends_on:
       - otel-collector

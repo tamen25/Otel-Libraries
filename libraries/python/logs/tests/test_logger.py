@@ -1,8 +1,6 @@
 #This file contains test logger logic for logs tests.
 import contextlib
 import io
-import os
-import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -14,6 +12,7 @@ from cloudops_otel_logs.logger import (
     LogsExporterConfig,
     ExporterParameters,
     _normalize_endpoint,
+    _org_id,
     _parse_log_levels,
     _parse_resource_attributes,
     _parse_string_list,
@@ -135,8 +134,8 @@ class CloudOpsLoggerTests(unittest.TestCase):
         )
         self.assertEqual(_normalize_endpoint("https://collector.example.com/"), "https://collector.example.com/v1/logs")
 
-    #Handles test read exporter parameters prefers JSON and falls back to OTel env.
-    def test_read_exporter_parameters_prefers_json_and_falls_back_to_otel_env(self):
+    #Handles test read exporter parameters prefers the JSON blob over the env endpoint.
+    def test_read_exporter_parameters_prefers_json_over_env_endpoint(self):
         with patch.dict("os.environ", {
             "OTEL_EXPORTER_PARAMETERS": '{"otel":{"logs":{"url":"https://collector.example.com/v1/logs"}}}',
             "OTEL_EXPORTER_OTLP_ENDPOINT": "https://fallback.example.com",
@@ -145,44 +144,76 @@ class CloudOpsLoggerTests(unittest.TestCase):
 
         self.assertEqual(parsed.otel.logs.url, "https://collector.example.com/v1/logs")
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.dict("os.environ", {
-                "OTEL_EXPORTER_PARAMETERS_FILE": os.path.join(temp_dir, "missing.json"),
-                "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.example.com/",
-            }, clear=True):
-                parsed = _read_exporter_parameters()
+    #Handles test read exporter parameters normalises the env endpoint fallback.
+    def test_read_exporter_parameters_normalises_env_endpoint(self):
+        with patch.dict("os.environ", {
+            "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.example.com/",
+        }, clear=True):
+            parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://collector.example.com/v1/logs")
 
-    #Handles test read exporter parameters uses params file before direct env.
-    def test_read_exporter_parameters_uses_params_file_before_direct_env(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            params_file = os.path.join(temp_dir, "otelExporterParams.json")
-            with open(params_file, "w", encoding="utf-8") as file:
-                file.write('{"otel":{"logs":{"url":"https://file.example.com/v1/logs"}}}')
+    #Handles test read exporter parameters falls back to the hardcoded default endpoint.
+    def test_read_exporter_parameters_uses_default_endpoint_constant(self):
+        with patch.dict("os.environ", {}, clear=True), \
+                patch("cloudops_otel_logs.logger.DEFAULT_LOGS_ENDPOINT", "https://baked-in.example.com/v1/logs"):
+            parsed = _read_exporter_parameters()
 
-            with patch.dict("os.environ", {
-                "OTEL_EXPORTER_PARAMETERS_FILE": params_file,
-                "OTEL_EXPORTER_OTLP_ENDPOINT": "https://fallback.example.com",
-            }, clear=True):
-                parsed = _read_exporter_parameters()
+        self.assertEqual(parsed.otel.logs.url, "https://baked-in.example.com/v1/logs")
 
-        self.assertEqual(parsed.otel.logs.url, "https://file.example.com/v1/logs")
+    #Handles test read exporter parameters is empty when nothing is configured.
+    def test_read_exporter_parameters_empty_without_endpoint(self):
+        with patch.dict("os.environ", {}, clear=True):
+            parsed = _read_exporter_parameters()
 
-    #Handles test read exporter parameters falls back when params file is invalid.
-    def test_read_exporter_parameters_falls_back_when_params_file_is_invalid(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            params_file = os.path.join(temp_dir, "otelExporterParams.json")
-            with open(params_file, "w", encoding="utf-8") as file:
-                file.write("{not-json")
+        self.assertTrue(parsed.is_empty())
 
-            with patch.dict("os.environ", {
-                "OTEL_EXPORTER_PARAMETERS_FILE": params_file,
-                "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT": "https://fallback.example.com/v1/logs",
-            }, clear=True):
-                parsed = _read_exporter_parameters()
+    #Handles test org id prefers env over the hardcoded default.
+    def test_org_id_resolution(self):
+        with patch.dict("os.environ", {"X_ORG_ID": "org-from-env"}, clear=True):
+            self.assertEqual(_org_id(), "org-from-env")
 
-        self.assertEqual(parsed.otel.logs.url, "https://fallback.example.com/v1/logs")
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertIsNone(_org_id())
+            with patch("cloudops_otel_logs.logger.DEFAULT_X_ORG_ID", "org-baked-in"):
+                self.assertEqual(_org_id(), "org-baked-in")
+
+    #Handles test otel export without X_ORG_ID falls back to console.
+    def test_otel_without_org_id_falls_back_to_console(self):
+        with patch.dict("os.environ", {
+            "OTEL_BACKEND_EXPORTERS": "otel",
+            "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.example.com",
+            "OTEL_SERVICE_NAME": "order-api",
+        }, clear=True):
+            logger = CloudOpsLogger("test")
+
+        self.assertTrue(logger._use_console)
+        self.assertFalse(logger._use_otel)
+
+    #Handles test otel export without an endpoint falls back to console.
+    def test_otel_without_endpoint_falls_back_to_console(self):
+        with patch.dict("os.environ", {
+            "OTEL_BACKEND_EXPORTERS": "otel",
+            "X_ORG_ID": "org-123",
+            "OTEL_SERVICE_NAME": "order-api",
+        }, clear=True):
+            logger = CloudOpsLogger("test")
+
+        self.assertTrue(logger._use_console)
+        self.assertFalse(logger._use_otel)
+
+    #Handles test otel export with endpoint and X_ORG_ID enables the OTLP exporter.
+    def test_otel_with_endpoint_and_org_id_enables_otel(self):
+        with patch.dict("os.environ", {
+            "OTEL_BACKEND_EXPORTERS": "otel",
+            "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.example.com",
+            "X_ORG_ID": "org-123",
+            "OTEL_SERVICE_NAME": "order-api",
+        }, clear=True):
+            logger = CloudOpsLogger("test")
+
+        self.assertTrue(logger._use_otel)
+        self.assertFalse(logger._use_console)
 
     #Handles test console logger renders enabled messages.
     def test_console_logger_renders_enabled_messages(self):

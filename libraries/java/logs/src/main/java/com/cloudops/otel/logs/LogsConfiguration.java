@@ -3,12 +3,14 @@ package com.cloudops.otel.logs;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 
 final class LogsConfiguration {
-  private static final String DEFAULT_EXPORTER_PARAMETERS_FILE = "/tmp/otelExporterParams.json";
+  // Hardcoded fallbacks for the OTLP logs endpoint and org id. Env vars override
+  // these; leave them empty to fall back to console. X_ORG_ID is required for OTLP
+  // export no matter what — without it the logger always uses console.
+  static final String DEFAULT_LOGS_ENDPOINT = "";
+  static final String DEFAULT_X_ORG_ID = "";
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -23,16 +25,14 @@ final class LogsConfiguration {
         ExporterParameters parsed = MAPPER.readValue(configured, ExporterParameters.class);
         if (parsed != null && !parsed.isEmpty()) return parsed;
       } catch (Exception ignored) {
-        // Fall through to the params file and then direct OTEL env vars.
+        // Fall through to the direct OTEL env vars and the hardcoded default.
       }
     }
 
-    ExporterParameters fileParameters = readExporterParametersFile();
-    if (!fileParameters.isEmpty()) return fileParameters;
-
     String logsUrl = firstValue(
         System.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"),
-        normalizeEndpoint(System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")));
+        normalizeEndpoint(System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")),
+        DEFAULT_LOGS_ENDPOINT);
 
     ExporterParameters parameters = new ExporterParameters();
     if (hasValue(logsUrl)) {
@@ -47,21 +47,9 @@ final class LogsConfiguration {
     return parameters;
   }
 
-  // Reads exporter parameters file.
-  static ExporterParameters readExporterParametersFile() {
-    String configuredPath = System.getenv("OTEL_EXPORTER_PARAMETERS_FILE");
-    String filePath = firstValue(configuredPath, DEFAULT_EXPORTER_PARAMETERS_FILE);
-    return readExporterParametersFile(Path.of(filePath));
-  }
-
-  // Reads exporter parameters file.
-  static ExporterParameters readExporterParametersFile(Path filePath) {
-    try {
-      ExporterParameters parsed = MAPPER.readValue(filePath.toFile(), ExporterParameters.class);
-      return parsed == null ? new ExporterParameters() : parsed;
-    } catch (IOException ignored) {
-      return new ExporterParameters();
-    }
+  // Resolves org id.
+  static String orgId() {
+    return firstValue(System.getenv("X_ORG_ID"), DEFAULT_X_ORG_ID);
   }
 
   // Parses string array.

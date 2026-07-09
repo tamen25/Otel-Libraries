@@ -25,84 +25,54 @@ public sealed class LogsConfigurationTests
     }
 
     [Fact]
-    // Reads exporter parameters prefers configured JSON and falls back to OTel environment.
-    public void ReadExporterParametersPrefersConfiguredJsonAndFallsBackToOtelEnvironment()
+    // Reads exporter parameters prefers the JSON blob over the env endpoint.
+    public void ReadExporterParametersPrefersJsonOverEnvEndpoint()
     {
-        using (new EnvironmentScope(new Dictionary<string, string?>
+        using var env = new EnvironmentScope(new Dictionary<string, string?>
         {
             ["OTEL_EXPORTER_PARAMETERS"] = """{"otel":{"logs":{"url":"https://collector.example.com/v1/logs"}}}""",
             ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com"
-        }))
-        {
-            var parsed = LogsConfiguration.ReadExporterParameters();
-            Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-        }
+        });
 
-        using (new EnvironmentScope(new Dictionary<string, string?>
+        var parsed = LogsConfiguration.ReadExporterParameters();
+        Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
+    }
+
+    [Fact]
+    // Reads exporter parameters normalises the env endpoint fallback.
+    public void ReadExporterParametersNormalisesEnvEndpoint()
+    {
+        using var env = new EnvironmentScope(new Dictionary<string, string?>
         {
-            ["OTEL_EXPORTER_PARAMETERS"] = null,
-            ["OTEL_EXPORTER_PARAMETERS_FILE"] = Path.Combine(Path.GetTempPath(), $"missing-{Guid.NewGuid():N}.json"),
             ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://collector.example.com/"
-        }))
-        {
-            var parsed = LogsConfiguration.ReadExporterParameters();
-            Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-        }
+        });
+
+        var parsed = LogsConfiguration.ReadExporterParameters();
+        Assert.Equal("https://collector.example.com/v1/logs", parsed.Otel?.Logs?.Url);
     }
 
     [Fact]
-    // Reads exporter parameters uses original params file before direct environment.
-    public void ReadExporterParametersUsesOriginalParamsFileBeforeDirectEnvironment()
+    // Reads exporter parameters is empty when no endpoint is configured.
+    public void ReadExporterParametersIsEmptyWithoutEndpoint()
     {
-        var tempDir = Directory.CreateTempSubdirectory("cloudops-otel-logs-");
+        using var env = new EnvironmentScope(new Dictionary<string, string?>());
 
-        try
-        {
-            var paramsFile = Path.Combine(tempDir.FullName, "otelExporterParams.json");
-            File.WriteAllText(
-                paramsFile,
-                """{"otel":{"logs":{"url":"https://file.example.com/v1/logs"}}}""");
-
-            using (new EnvironmentScope(new Dictionary<string, string?>
-            {
-                ["OTEL_EXPORTER_PARAMETERS_FILE"] = paramsFile,
-                ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "https://fallback.example.com"
-            }))
-            {
-                var parsed = LogsConfiguration.ReadExporterParameters();
-                Assert.Equal("https://file.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-            }
-        }
-        finally
-        {
-            tempDir.Delete(recursive: true);
-        }
+        var parsed = LogsConfiguration.ReadExporterParameters();
+        Assert.True(parsed.IsEmpty());
     }
 
     [Fact]
-    // Reads exporter parameters falls back to direct environment when file is invalid.
-    public void ReadExporterParametersFallsBackToDirectEnvironmentWhenFileIsInvalid()
+    // Resolves org id from the environment, else null when unset.
+    public void OrgIdPrefersEnvironmentElseNull()
     {
-        var tempDir = Directory.CreateTempSubdirectory("cloudops-otel-logs-");
-
-        try
+        using (new EnvironmentScope(new Dictionary<string, string?> { ["X_ORG_ID"] = "org-from-env" }))
         {
-            var paramsFile = Path.Combine(tempDir.FullName, "otelExporterParams.json");
-            File.WriteAllText(paramsFile, "{not-json");
-
-            using (new EnvironmentScope(new Dictionary<string, string?>
-            {
-                ["OTEL_EXPORTER_PARAMETERS_FILE"] = paramsFile,
-                ["OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"] = "https://fallback.example.com/v1/logs"
-            }))
-            {
-                var parsed = LogsConfiguration.ReadExporterParameters();
-                Assert.Equal("https://fallback.example.com/v1/logs", parsed.Otel?.Logs?.Url);
-            }
+            Assert.Equal("org-from-env", LogsConfiguration.OrgId());
         }
-        finally
+
+        using (new EnvironmentScope(new Dictionary<string, string?>()))
         {
-            tempDir.Delete(recursive: true);
+            Assert.Null(LogsConfiguration.OrgId());
         }
     }
 }

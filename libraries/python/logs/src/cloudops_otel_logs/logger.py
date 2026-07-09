@@ -33,7 +33,11 @@ LogLevel = str
 DEFAULT_EXPORTERS = ["console"]
 DEFAULT_LOG_LEVELS = {"info", "error", "debug", "warn"}
 VALID_LOG_LEVELS = DEFAULT_LOG_LEVELS
-DEFAULT_EXPORTER_PARAMETERS_FILE = "/tmp/otelExporterParams.json"
+# Hardcoded fallbacks for the OTLP logs endpoint and org id. Env vars override
+# these; leave them empty to fall back to console. X_ORG_ID is required for OTLP
+# export no matter what — without it the logger always uses console.
+DEFAULT_LOGS_ENDPOINT = ""
+DEFAULT_X_ORG_ID = ""
 
 
 @dataclass
@@ -136,19 +140,6 @@ def _exporter_parameters_from_json(parsed: Any) -> ExporterParameters:
     )))
 
 
-#Reads exporter parameters file.
-def _read_exporter_parameters_file(file_path: str | None = None) -> ExporterParameters:
-    resolved_path = file_path or os.getenv("OTEL_EXPORTER_PARAMETERS_FILE") or DEFAULT_EXPORTER_PARAMETERS_FILE
-    try:
-        with open(resolved_path, encoding="utf-8") as params_file:
-            return _exporter_parameters_from_json(json.load(params_file))
-    except FileNotFoundError:
-        return ExporterParameters()
-    except (OSError, json.JSONDecodeError) as error:
-        logging.getLogger(__name__).error("Error reading or parsing otelExporterParams.json: %s", error)
-        return ExporterParameters()
-
-
 #Reads exporter parameters.
 def _read_exporter_parameters() -> ExporterParameters:
     configured = os.getenv("OTEL_EXPORTER_PARAMETERS")
@@ -160,15 +151,20 @@ def _read_exporter_parameters() -> ExporterParameters:
         except (json.JSONDecodeError, AttributeError):
             pass
 
-    file_parameters = _read_exporter_parameters_file()
-    if not file_parameters.is_empty():
-        return file_parameters
-
-    logs_url = os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT") or _normalize_endpoint(os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+    logs_url = (
+        os.getenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT")
+        or _normalize_endpoint(os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+        or DEFAULT_LOGS_ENDPOINT
+    )
     if logs_url:
         return ExporterParameters(otel=BackendConfig(logs=LogsExporterConfig(url=logs_url)))
 
     return ExporterParameters()
+
+
+#Resolves org id.
+def _org_id() -> str | None:
+    return os.getenv("X_ORG_ID") or DEFAULT_X_ORG_ID or None
 
 
 #Finds first env.
@@ -377,18 +373,17 @@ class CloudOpsLogger:
     #Initializes OTel.
     def _initialise_otel(self, exporter_parameters: ExporterParameters) -> None:
         config = exporter_parameters.backend("otel").logs if exporter_parameters.backend("otel") else None
-        if not config or not _otel_available():
+        org_id = _org_id()
+        if not config or not config.url or not org_id or not _otel_available():
             self._use_console = True
             return
 
         resource = Resource.create(self.resource_attributes)
         self._logger_provider = LoggerProvider(resource=resource)
-        exporter_options: dict[str, Any] = {}
-        if config.url:
-            exporter_options["endpoint"] = config.url
-        org_id = os.getenv("X_ORG_ID")
-        if org_id:
-            exporter_options["headers"] = {"X-OrgId": org_id}
+        exporter_options: dict[str, Any] = {
+            "endpoint": config.url,
+            "headers": {"X-OrgId": org_id},
+        }
         exporter = OTLPLogExporter(**exporter_options)
         self._logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
         set_logger_provider(self._logger_provider)
