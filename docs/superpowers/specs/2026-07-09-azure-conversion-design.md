@@ -83,6 +83,14 @@ JSON blob shape is unchanged. Anything still setting only `OTEL_SSM_PARAMETERS`
 after the cutover gets the existing missing-config behaviour: fall back to the
 console exporter.
 
+## 2b. Trace-id source (`_current_trace_id` / equivalents)
+
+All three ports prefer the Lambda trace header env var `_X_AMZN_TRACE_ID` when
+deriving the current trace id, falling back to the active OTel span. Azure has
+no env-var equivalent (Functions invocation ids come from the runtime context,
+not the environment). The AWS branch is deleted outright: trace id comes from
+the active span context, else `"unknown"`. No replacement env var.
+
 ## 3. Documentation and comment sweep
 
 - `libraries/{python,java,dotnet}/logs/README.md`: env-var tables, runtime
