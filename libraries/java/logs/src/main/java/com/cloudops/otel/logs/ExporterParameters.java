@@ -1,9 +1,9 @@
-// This file contains SSM parameters logic for OTel logs.
+// This file contains exporter parameters logic for OTel logs.
 package com.cloudops.otel.logs;
 
 import java.util.Objects;
 
-public final class SsmParameters {
+public final class ExporterParameters {
   public BackendConfig otel;
 
   // Checks whether empty.

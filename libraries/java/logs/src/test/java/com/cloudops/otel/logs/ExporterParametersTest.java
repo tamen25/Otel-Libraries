@@ -1,4 +1,4 @@
-// This file contains SSM parameters test logic for OTel logs.
+// This file contains exporter parameters test logic for OTel logs.
 package com.cloudops.otel.logs;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,10 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-class SsmParametersTest {
+class ExporterParametersTest {
   @Test
   void emptyWhenNoLogsBackendIsConfigured() {
-    assertTrue(new SsmParameters().isEmpty());
+    assertTrue(new ExporterParameters().isEmpty());
   }
 
   @Test
@@ -22,7 +22,7 @@ class SsmParametersTest {
     BackendConfig backend = new BackendConfig();
     backend.logs = logs;
 
-    SsmParameters parameters = new SsmParameters();
+    ExporterParameters parameters = new ExporterParameters();
     parameters.otel = backend;
 
     assertFalse(parameters.isEmpty());

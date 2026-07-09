@@ -8,6 +8,7 @@ import java.util.Map;
 public final class RuntimeResourceAttributes {
   private static final String ATTR_SERVICE_NAME = "service.name";
   private static final String ATTR_CLOUD_PLATFORM = "cloud.platform";
+  private static final String ATTR_CLOUD_PROVIDER = "cloud.provider";
   private static final String ATTR_CONTAINER_ID = "container.id";
   private static final String ATTR_CONTAINER_NAME = "container.name";
   private static final String ATTR_FAAS_NAME = "faas.name";
@@ -24,7 +25,7 @@ public final class RuntimeResourceAttributes {
     Map<String, String> attributes = new LinkedHashMap<>(parseResourceAttributes(env("OTEL_RESOURCE_ATTRIBUTES")));
     attributes.put(
         ATTR_SERVICE_NAME,
-        firstEnv("OTEL_SERVICE_NAME", attributes.get(ATTR_SERVICE_NAME), "AWS_LAMBDA_FUNCTION_NAME", "unknown_service"));
+        firstEnv("OTEL_SERVICE_NAME", attributes.get(ATTR_SERVICE_NAME), "WEBSITE_SITE_NAME", "unknown_service"));
     attributes.put("pe-lib-log-ver", "1.16.2");
 
     addRuntimeAttributes(attributes);
@@ -33,20 +34,28 @@ public final class RuntimeResourceAttributes {
 
   // Adds runtime attributes.
   private static void addRuntimeAttributes(Map<String, String> attributes) {
-    String lambdaName = env("AWS_LAMBDA_FUNCTION_NAME");
-    if (hasValue(lambdaName)) {
-      attributes.put(ATTR_CLOUD_PLATFORM, "aws_lambda");
-      attributes.put(ATTR_FAAS_NAME, lambdaName);
+    if (hasValue(firstEnv("FUNCTIONS_EXTENSION_VERSION", "FUNCTIONS_WORKER_RUNTIME"))) {
+      attributes.put(ATTR_CLOUD_PROVIDER, "azure");
+      attributes.put(ATTR_CLOUD_PLATFORM, "azure_functions");
+      String siteName = env("WEBSITE_SITE_NAME");
+      if (hasValue(siteName)) {
+        attributes.put(ATTR_FAAS_NAME, siteName);
+      }
       return;
     }
 
-    if (hasValue(firstEnv("ECS_CONTAINER_METADATA_URI_V4", "ECS_CONTAINER_METADATA_URI"))
-        || hasValue(env("ECS_CONTAINER_METADATA_FILE"))) {
-      attributes.put(ATTR_CLOUD_PLATFORM, "aws_ecs");
+    if (hasValue(env("CONTAINER_APP_NAME"))) {
+      attributes.put(ATTR_CLOUD_PROVIDER, "azure");
+      attributes.put(ATTR_CLOUD_PLATFORM, "azure_container_apps");
+    }
+
+    if (hasValue(env("WEBSITE_SITE_NAME"))) {
+      attributes.put(ATTR_CLOUD_PROVIDER, "azure");
+      attributes.put(ATTR_CLOUD_PLATFORM, "azure_app_service");
     }
 
     boolean runningOnKubernetes = hasValue(env("KUBERNETES_SERVICE_HOST"));
-    String k8sClusterName = firstEnv("K8S_CLUSTER_NAME", "EKS_CLUSTER_NAME");
+    String k8sClusterName = firstEnv("K8S_CLUSTER_NAME", "AKS_CLUSTER_NAME");
     String k8sNamespaceName = firstEnv("K8S_NAMESPACE_NAME", "POD_NAMESPACE");
     String k8sNodeName = firstEnv("K8S_NODE_NAME", "NODE_NAME");
     String k8sPodName = firstEnv("K8S_POD_NAME", "POD_NAME");
@@ -55,7 +64,8 @@ public final class RuntimeResourceAttributes {
     }
 
     if (runningOnKubernetes || hasValue(k8sClusterName) || hasValue(k8sNamespaceName) || hasValue(k8sPodName)) {
-      attributes.put(ATTR_CLOUD_PLATFORM, "aws_eks");
+      attributes.put(ATTR_CLOUD_PROVIDER, "azure");
+      attributes.put(ATTR_CLOUD_PLATFORM, "azure_aks");
     }
 
     putIfPresent(attributes, ATTR_K8S_CLUSTER_NAME, k8sClusterName);
@@ -63,7 +73,7 @@ public final class RuntimeResourceAttributes {
     putIfPresent(attributes, ATTR_K8S_NODE_NAME, k8sNodeName);
     putIfPresent(attributes, ATTR_K8S_POD_NAME, k8sPodName);
     putIfPresent(attributes, ATTR_CONTAINER_ID, env("CONTAINER_ID"));
-    putIfPresent(attributes, ATTR_CONTAINER_NAME, firstEnv("CONTAINER_NAME", "ECS_CONTAINER_NAME"));
+    putIfPresent(attributes, ATTR_CONTAINER_NAME, firstEnv("CONTAINER_NAME", "CONTAINER_APP_NAME"));
   }
 
   // Parses resource attributes.

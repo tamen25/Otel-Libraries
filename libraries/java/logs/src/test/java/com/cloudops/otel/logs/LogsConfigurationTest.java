@@ -42,13 +42,13 @@ class LogsConfigurationTest {
   }
 
   @Test
-  void readSsmParametersFileReadsOriginalParamsFile(@TempDir Path tempDir) throws IOException {
+  void readExporterParametersFileReadsOriginalParamsFile(@TempDir Path tempDir) throws IOException {
     Path paramsFile = tempDir.resolve("otelExporterParams.json");
     Files.writeString(
         paramsFile,
         "{\"otel\":{\"logs\":{\"url\":\"https://file.example.com/v1/logs\",\"api_key\":\"file-secret\"}}}");
 
-    SsmParameters parsed = LogsConfiguration.readSsmParametersFile(paramsFile);
+    ExporterParameters parsed = LogsConfiguration.readExporterParametersFile(paramsFile);
 
     assertFalse(parsed.isEmpty());
     assertEquals("https://file.example.com/v1/logs", parsed.otel.logs.url);
@@ -56,11 +56,11 @@ class LogsConfigurationTest {
   }
 
   @Test
-  void readSsmParametersFileReturnsEmptyForInvalidFile(@TempDir Path tempDir) throws IOException {
+  void readExporterParametersFileReturnsEmptyForInvalidFile(@TempDir Path tempDir) throws IOException {
     Path paramsFile = tempDir.resolve("otelExporterParams.json");
     Files.writeString(paramsFile, "{not-json");
 
-    SsmParameters parsed = LogsConfiguration.readSsmParametersFile(paramsFile);
+    ExporterParameters parsed = LogsConfiguration.readExporterParametersFile(paramsFile);
 
     assertTrue(parsed.isEmpty());
   }

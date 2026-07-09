@@ -8,26 +8,26 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 final class LogsConfiguration {
-  private static final String DEFAULT_SSM_PARAMETERS_FILE = "/tmp/otelExporterParams.json";
+  private static final String DEFAULT_EXPORTER_PARAMETERS_FILE = "/tmp/otelExporterParams.json";
   private static final ObjectMapper MAPPER = new ObjectMapper()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
   // Handles logs configuration.
   private LogsConfiguration() {}
 
-  // Reads SSM parameters.
-  static SsmParameters readSsmParameters() {
-    String configured = System.getenv("OTEL_SSM_PARAMETERS");
+  // Reads exporter parameters.
+  static ExporterParameters readExporterParameters() {
+    String configured = System.getenv("OTEL_EXPORTER_PARAMETERS");
     if (hasValue(configured)) {
       try {
-        SsmParameters parsed = MAPPER.readValue(configured, SsmParameters.class);
+        ExporterParameters parsed = MAPPER.readValue(configured, ExporterParameters.class);
         if (parsed != null && !parsed.isEmpty()) return parsed;
       } catch (Exception ignored) {
         // Fall through to the params file and then direct OTEL env vars.
       }
     }
 
-    SsmParameters fileParameters = readSsmParametersFile();
+    ExporterParameters fileParameters = readExporterParametersFile();
     if (!fileParameters.isEmpty()) return fileParameters;
 
     String logsUrl = firstValue(
@@ -37,7 +37,7 @@ final class LogsConfiguration {
         System.getenv("OTEL_API_KEY"),
         System.getenv("OTEL_EXPORTER_OTLP_HEADERS"));
 
-    SsmParameters parameters = new SsmParameters();
+    ExporterParameters parameters = new ExporterParameters();
     if (hasValue(logsUrl) || hasValue(apiKey)) {
       LogsExporterConfig exporterConfig = new LogsExporterConfig();
       exporterConfig.url = logsUrl;
@@ -51,20 +51,20 @@ final class LogsConfiguration {
     return parameters;
   }
 
-  // Reads SSM parameters file.
-  static SsmParameters readSsmParametersFile() {
-    String configuredPath = System.getenv("OTEL_SSM_PARAMETERS_FILE");
-    String filePath = firstValue(configuredPath, DEFAULT_SSM_PARAMETERS_FILE);
-    return readSsmParametersFile(Path.of(filePath));
+  // Reads exporter parameters file.
+  static ExporterParameters readExporterParametersFile() {
+    String configuredPath = System.getenv("OTEL_EXPORTER_PARAMETERS_FILE");
+    String filePath = firstValue(configuredPath, DEFAULT_EXPORTER_PARAMETERS_FILE);
+    return readExporterParametersFile(Path.of(filePath));
   }
 
-  // Reads SSM parameters file.
-  static SsmParameters readSsmParametersFile(Path filePath) {
+  // Reads exporter parameters file.
+  static ExporterParameters readExporterParametersFile(Path filePath) {
     try {
-      SsmParameters parsed = MAPPER.readValue(filePath.toFile(), SsmParameters.class);
-      return parsed == null ? new SsmParameters() : parsed;
+      ExporterParameters parsed = MAPPER.readValue(filePath.toFile(), ExporterParameters.class);
+      return parsed == null ? new ExporterParameters() : parsed;
     } catch (IOException ignored) {
-      return new SsmParameters();
+      return new ExporterParameters();
     }
   }
 

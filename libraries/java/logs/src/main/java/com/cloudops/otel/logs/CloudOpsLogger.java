@@ -142,8 +142,8 @@ public final class CloudOpsLogger {
       return;
     }
 
-    SsmParameters ssmParameters = LogsConfiguration.readSsmParameters();
-    if (ssmParameters == null || ssmParameters.isEmpty()) {
+    ExporterParameters exporterParameters = LogsConfiguration.readExporterParameters();
+    if (exporterParameters == null || exporterParameters.isEmpty()) {
       useConsole = true;
       return;
     }
@@ -151,15 +151,15 @@ public final class CloudOpsLogger {
     for (String exporter : exportersList) {
       switch (exporter.trim().toLowerCase()) {
         case "console" -> useConsole = true;
-        case "otel" -> initialiseOtel(ssmParameters);
+        case "otel" -> initialiseOtel(exporterParameters);
         default -> useConsole = true;
       }
     }
   }
 
   // Initializes OTel.
-  private void initialiseOtel(SsmParameters ssmParameters) {
-    BackendConfig backendConfig = ssmParameters.backend("otel");
+  private void initialiseOtel(ExporterParameters exporterParameters) {
+    BackendConfig backendConfig = exporterParameters.backend("otel");
     if (backendConfig == null || backendConfig.logs == null) {
       useConsole = true;
       return;
@@ -261,9 +261,6 @@ public final class CloudOpsLogger {
 
   // Gets current trace ID.
   private static String currentTraceId() {
-    String lambdaTraceId = System.getenv("_X_AMZN_TRACE_ID");
-    if (LogsConfiguration.hasValue(lambdaTraceId)) return lambdaTraceId;
-
     SpanContext spanContext = Span.current().getSpanContext();
     return spanContext.isValid() ? spanContext.getTraceId() : "unknown";
   }
