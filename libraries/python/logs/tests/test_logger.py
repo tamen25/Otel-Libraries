@@ -23,35 +23,85 @@ from cloudops_otel_logs.logger import (
 
 
 class CloudOpsLoggerTests(unittest.TestCase):
-    #Handles test runtime resource attributes for EKS.
-    def test_runtime_resource_attributes_for_eks(self):
+    #Handles test runtime resource attributes for AKS.
+    def test_runtime_resource_attributes_for_aks(self):
         with patch.dict("os.environ", {
             "OTEL_SERVICE_NAME": "order-api",
             "KUBERNETES_SERVICE_HOST": "10.0.0.1",
             "K8S_NAMESPACE_NAME": "cloudops",
             "K8S_POD_NAME": "order-api-abc",
-            "K8S_NODE_NAME": "ip-10-0-0-1",
-            "K8S_CLUSTER_NAME": "cloudops-dev",
+            "K8S_NODE_NAME": "aks-nodepool1-1",
+            "AKS_CLUSTER_NAME": "cloudops-dev",
         }, clear=True):
             logger = CloudOpsLogger("test")
 
         self.assertEqual(logger.resource_attributes["service.name"], "order-api")
-        self.assertEqual(logger.resource_attributes["cloud.platform"], "aws_eks")
+        self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
+        self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_aks")
         self.assertEqual(logger.resource_attributes["k8s.namespace.name"], "cloudops")
         self.assertEqual(logger.resource_attributes["k8s.pod.name"], "order-api-abc")
-        self.assertEqual(logger.resource_attributes["k8s.node.name"], "ip-10-0-0-1")
+        self.assertEqual(logger.resource_attributes["k8s.node.name"], "aks-nodepool1-1")
         self.assertEqual(logger.resource_attributes["k8s.cluster.name"], "cloudops-dev")
 
-    #Handles test runtime resource attributes for lambda.
-    def test_runtime_resource_attributes_for_lambda(self):
+    #Handles test runtime resource attributes for Azure Functions.
+    def test_runtime_resource_attributes_for_functions(self):
         with patch.dict("os.environ", {
-            "AWS_LAMBDA_FUNCTION_NAME": "orders-handler",
+            "FUNCTIONS_EXTENSION_VERSION": "~4",
+            "WEBSITE_SITE_NAME": "orders-func",
         }, clear=True):
             logger = CloudOpsLogger("test")
 
-        self.assertEqual(logger.resource_attributes["service.name"], "orders-handler")
-        self.assertEqual(logger.resource_attributes["cloud.platform"], "aws_lambda")
-        self.assertEqual(logger.resource_attributes["faas.name"], "orders-handler")
+        self.assertEqual(logger.resource_attributes["service.name"], "orders-func")
+        self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
+        self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_functions")
+        self.assertEqual(logger.resource_attributes["faas.name"], "orders-func")
+
+    #Handles test Functions detection early-returns before K8s attributes.
+    def test_runtime_resource_attributes_functions_early_return(self):
+        with patch.dict("os.environ", {
+            "FUNCTIONS_WORKER_RUNTIME": "python",
+            "WEBSITE_SITE_NAME": "orders-func",
+            "KUBERNETES_SERVICE_HOST": "10.0.0.1",
+        }, clear=True):
+            logger = CloudOpsLogger("test")
+
+        self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_functions")
+        self.assertNotIn("k8s.pod.name", logger.resource_attributes)
+
+    #Handles test runtime resource attributes for Container Apps.
+    def test_runtime_resource_attributes_for_container_apps(self):
+        with patch.dict("os.environ", {
+            "OTEL_SERVICE_NAME": "order-api",
+            "CONTAINER_APP_NAME": "orders-ca",
+        }, clear=True):
+            logger = CloudOpsLogger("test")
+
+        self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
+        self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_container_apps")
+        self.assertEqual(logger.resource_attributes["container.name"], "orders-ca")
+
+    #Handles test Container Apps plus K8s signals fall through to AKS.
+    def test_container_apps_with_k8s_falls_through_to_aks(self):
+        with patch.dict("os.environ", {
+            "CONTAINER_APP_NAME": "orders-ca",
+            "KUBERNETES_SERVICE_HOST": "10.0.0.1",
+        }, clear=True):
+            logger = CloudOpsLogger("test")
+
+        self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_aks")
+        self.assertEqual(logger.resource_attributes["container.name"], "orders-ca")
+
+    #Handles test runtime resource attributes for App Service.
+    def test_runtime_resource_attributes_for_app_service(self):
+        with patch.dict("os.environ", {
+            "WEBSITE_SITE_NAME": "orders-web",
+        }, clear=True):
+            logger = CloudOpsLogger("test")
+
+        self.assertEqual(logger.resource_attributes["service.name"], "orders-web")
+        self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
+        self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_app_service")
+        self.assertNotIn("faas.name", logger.resource_attributes)
 
     #Handles test runtime resource attributes merge OTel resource attributes.
     def test_runtime_resource_attributes_merge_otel_resource_attributes(self):

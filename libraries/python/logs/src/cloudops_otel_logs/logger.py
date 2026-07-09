@@ -190,28 +190,36 @@ def _runtime_resource_attributes() -> dict[str, str]:
     attributes["service.name"] = (
         os.getenv("OTEL_SERVICE_NAME")
         or attributes.get("service.name")
-        or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+        or os.getenv("WEBSITE_SITE_NAME")
         or "unknown_service"
     )
     attributes["pe-lib-log-ver"] = "1.16.2"
 
-    lambda_name = os.getenv("AWS_LAMBDA_FUNCTION_NAME")
-    if lambda_name:
-        attributes["cloud.platform"] = "aws_lambda"
-        attributes["faas.name"] = lambda_name
+    if _first_env("FUNCTIONS_EXTENSION_VERSION", "FUNCTIONS_WORKER_RUNTIME"):
+        attributes["cloud.provider"] = "azure"
+        attributes["cloud.platform"] = "azure_functions"
+        site_name = os.getenv("WEBSITE_SITE_NAME")
+        if site_name:
+            attributes["faas.name"] = site_name
         return attributes
 
-    if _first_env("ECS_CONTAINER_METADATA_URI_V4", "ECS_CONTAINER_METADATA_URI") or os.getenv("ECS_CONTAINER_METADATA_FILE"):
-        attributes["cloud.platform"] = "aws_ecs"
+    if os.getenv("CONTAINER_APP_NAME"):
+        attributes["cloud.provider"] = "azure"
+        attributes["cloud.platform"] = "azure_container_apps"
+
+    if os.getenv("WEBSITE_SITE_NAME"):
+        attributes["cloud.provider"] = "azure"
+        attributes["cloud.platform"] = "azure_app_service"
 
     running_on_kubernetes = bool(os.getenv("KUBERNETES_SERVICE_HOST"))
-    k8s_cluster_name = _first_env("K8S_CLUSTER_NAME", "EKS_CLUSTER_NAME")
+    k8s_cluster_name = _first_env("K8S_CLUSTER_NAME", "AKS_CLUSTER_NAME")
     k8s_namespace_name = _first_env("K8S_NAMESPACE_NAME", "POD_NAMESPACE")
     k8s_node_name = _first_env("K8S_NODE_NAME", "NODE_NAME")
     k8s_pod_name = _first_env("K8S_POD_NAME", "POD_NAME") or (os.getenv("HOSTNAME") if running_on_kubernetes else None)
 
     if running_on_kubernetes or k8s_cluster_name or k8s_namespace_name or k8s_pod_name:
-        attributes["cloud.platform"] = "aws_eks"
+        attributes["cloud.provider"] = "azure"
+        attributes["cloud.platform"] = "azure_aks"
 
     optional_attributes = {
         "k8s.cluster.name": k8s_cluster_name,
@@ -219,7 +227,7 @@ def _runtime_resource_attributes() -> dict[str, str]:
         "k8s.node.name": k8s_node_name,
         "k8s.pod.name": k8s_pod_name,
         "container.id": os.getenv("CONTAINER_ID"),
-        "container.name": _first_env("CONTAINER_NAME", "ECS_CONTAINER_NAME"),
+        "container.name": _first_env("CONTAINER_NAME", "CONTAINER_APP_NAME"),
     }
     attributes.update({key: value for key, value in optional_attributes.items() if value})
     return attributes
