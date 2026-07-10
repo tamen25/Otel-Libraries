@@ -267,6 +267,7 @@ export class LogsInstrumentation {
 
     if (this.exportersList.length <= 1 && this.exportersList.includes("console")) {
       this.useConsole = true;
+      this.registerShutdownFlush();
       this.isInitialized = true;
       return;
     }
@@ -300,10 +301,21 @@ export class LogsInstrumentation {
       }
 
       this.initialiseWinston();
+      this.registerShutdownFlush();
       this.isInitialized = true;
     } catch (error) {
       diag.debug("OTEL register failed", error);
     }
+  }
+
+  // Best-effort flush at process shutdown so batched logs are not lost.
+  private registerShutdownFlush(): void {
+    process.once("beforeExit", () => {
+      void this.exportLogs().catch(() => {});
+    });
+    process.once("SIGTERM", () => {
+      void this.exportLogs().catch(() => {}).finally(() => process.exit(143));
+    });
   }
 
   // Handles setup exporters.

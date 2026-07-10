@@ -1,10 +1,10 @@
-<!-- This document explains readme for CloudOps. -->
-# @cloudops/otel-logs
+<!-- This document explains the readme for the otel logs library. -->
+# @otel/logs
 
-Node.js/TypeScript OpenTelemetry logs helper for CloudOps services.
+Node.js/TypeScript OpenTelemetry logs helper.
 
 ```ts
-import { logger } from "@cloudops/otel-logs";
+import { logger } from "@otel/logs";
 
 logger.info("order created", { orderId });
 logger.error(error);
@@ -34,7 +34,7 @@ library falls back to console. There is no secrets/parameter file.
 
 Set `OTEL_SERVICE_NAME` in every app. The library uses it as `service.name`.
 It also merges `OTEL_RESOURCE_ATTRIBUTES`, so app or deployment metadata such
-as `deployment.environment=dev,k8s.cluster.name=cloudops-dev-cluster` is kept
+as `deployment.environment=dev,k8s.cluster.name=demo-cluster` is kept
 on exported log records.
 
 The library also detects the Azure runtime and adds OpenTelemetry resource

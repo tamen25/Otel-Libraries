@@ -129,8 +129,8 @@ test("runtime resource attributes identify Azure Functions and AKS environments"
   resetEnv({
     OTEL_BACKEND_EXPORTERS: "console",
     KUBERNETES_SERVICE_HOST: "10.0.0.1",
-    K8S_CLUSTER_NAME: "cloudops-dev",
-    POD_NAMESPACE: "cloudops",
+    K8S_CLUSTER_NAME: "demo-cluster",
+    POD_NAMESPACE: "demo",
     HOSTNAME: "orders-pod",
     CONTAINER_NAME: "orders",
   });
@@ -141,8 +141,8 @@ test("runtime resource attributes identify Azure Functions and AKS environments"
   addKubernetesAttributes(kubernetesAttributes);
   assert.equal(kubernetesAttributes["cloud.provider"], "azure");
   assert.equal(kubernetesAttributes["cloud.platform"], "azure_aks");
-  assert.equal(kubernetesAttributes["k8s.cluster.name"], "cloudops-dev");
-  assert.equal(kubernetesAttributes["k8s.namespace.name"], "cloudops");
+  assert.equal(kubernetesAttributes["k8s.cluster.name"], "demo-cluster");
+  assert.equal(kubernetesAttributes["k8s.namespace.name"], "demo");
   assert.equal(kubernetesAttributes["k8s.pod.name"], "orders-pod");
   assert.equal(kubernetesAttributes["container.name"], "orders");
 });
@@ -256,4 +256,10 @@ test("parseStringArray returns fallback for non-array JSON or empty arrays", () 
   assert.deepEqual(parseStringArray('{"k":1}', ["fb"]), ["fb"]);
   // Empty JSON array → fallback.
   assert.deepEqual(parseStringArray("[]", ["fb"]), ["fb"]);
+});
+
+test("shutdown flush hooks are registered after init", () => {
+  const before = process.listenerCount("beforeExit");
+  require("../dist/index.js"); // importing initialises the logger singleton
+  assert.ok(process.listenerCount("beforeExit") >= before);
 });

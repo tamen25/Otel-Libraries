@@ -158,9 +158,9 @@ git commit -m "demo: replace OTel Collector with Grafana Alloy as the collector 
 **Interfaces:**
 - Produces: npm package `@otel/logs@0.1.0`, same exports (`logger`, `exportLogs()`); `npm pack` filename becomes `otel-logs-0.1.0.tgz` (Task 10 depends on this).
 
-- [ ] **Step 1:** In `package.json`: `"name": "@cloudops/otel-logs"` → `"@otel/logs"`; description drop "CloudOps". Grep the package for remaining brand strings: `grep -ri cloudops libraries/nodejs/logs/src libraries/nodejs/logs/tests libraries/nodejs/logs/package.json` and fix every hit (comments, class names like `CloudOpsLogger` → `OtelLogsInstrumentation` keep internal names simple: rename class only if it contains "CloudOps"; internal `LogsInstrumentation` class name is already brand-free — keep it).
+- [x] **Step 1:** In `package.json`: `"name": "@cloudops/otel-logs"` → `"@otel/logs"`; description drop "CloudOps". Grep the package for remaining brand strings: `grep -ri cloudops libraries/nodejs/logs/src libraries/nodejs/logs/tests libraries/nodejs/logs/package.json` and fix every hit (comments, class names like `CloudOpsLogger` → `OtelLogsInstrumentation` keep internal names simple: rename class only if it contains "CloudOps"; internal `LogsInstrumentation` class name is already brand-free — keep it).
 
-- [ ] **Step 2: Add shutdown flush** in `logsInstrumentation.ts` — call this at the end of successful init (where `isInitialized = true` is set):
+- [x] **Step 2: Add shutdown flush** in `logsInstrumentation.ts` — call this at the end of successful init (where `isInitialized = true` is set):
 
 ```ts
   // Best-effort flush at process shutdown so batched logs are not lost.
@@ -174,7 +174,7 @@ git commit -m "demo: replace OTel Collector with Grafana Alloy as the collector 
   }
 ```
 
-- [ ] **Step 3: New test** (same style/location as existing tests):
+- [x] **Step 3: New test** (same style/location as existing tests):
 
 ```js
 test("shutdown flush hooks are registered after init", () => {
@@ -184,9 +184,9 @@ test("shutdown flush hooks are registered after init", () => {
 });
 ```
 
-- [ ] **Step 4:** `cd libraries/nodejs/logs && npm run test:coverage` — expect all tests pass, coverage above existing gates.
+- [x] **Step 4:** `cd libraries/nodejs/logs && npm run test:coverage` — expect all tests pass, coverage above existing gates.
 
-- [ ] **Step 5: Commit**: `git add libraries/nodejs/logs && git commit -m "feat(nodejs-logs): rename to @otel/logs, add shutdown auto-flush"` (add specific paths, never `node_modules`).
+- [x] **Step 5: Commit**: `git add libraries/nodejs/logs && git commit -m "feat(nodejs-logs): rename to @otel/logs, add shutdown auto-flush"` (add specific paths, never `node_modules`).
 
 ---
 

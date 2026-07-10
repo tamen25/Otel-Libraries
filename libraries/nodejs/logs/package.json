@@ -1,7 +1,7 @@
 {
-  "name": "@cloudops/otel-logs",
+  "name": "@otel/logs",
   "version": "0.1.0",
-  "description": "CloudOps OpenTelemetry logs helper for Node.js.",
+  "description": "OpenTelemetry logs helper for Node.js.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -14,7 +14,6 @@
     "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/**/*.js\" --test-coverage-exclude=\"dist/index.js\" --test-coverage-lines=68 --test-coverage-branches=60 --test-coverage-functions=75"
   },
   "keywords": [
-    "cloudops",
     "opentelemetry",
     "logs"
   ],
