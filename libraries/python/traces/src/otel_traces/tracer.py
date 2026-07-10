@@ -1,7 +1,7 @@
-#This file contains tracer logic for src cloudops OTel traces.
+#This file contains tracer logic for the otel traces library.
+import atexit
 import json
 import os
-from typing import Any
 
 # Hardcoded fallbacks for the OTLP traces endpoint and org id. Env vars override
 # these; leave them empty to fall back to console. X_ORG_ID is required for OTLP
@@ -124,10 +124,9 @@ def _org_id() -> str | None:
     return os.getenv("X_ORG_ID") or DEFAULT_X_ORG_ID or None
 
 
-#Initializes tracing: gates OTLP on endpoint + X_ORG_ID, else console; and
-#registers Flask + requests auto-instrumentation so context propagates across
-#services automatically over W3C tracecontext (the OTel Python default).
-def init_tracing(app: Any = None) -> None:
+#Sets up the tracer provider: gates OTLP on endpoint + X_ORG_ID, else console;
+#registers W3C tracecontext propagation (the OTel Python default).
+def _init_provider() -> None:
     global _initialized
     if _initialized:
         return
@@ -159,27 +158,37 @@ def init_tracing(app: Any = None) -> None:
         provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
 
     trace.set_tracer_provider(provider)
-
-    try:
-        from opentelemetry.instrumentation.requests import RequestsInstrumentor
-
-        RequestsInstrumentor().instrument()
-    except ImportError:
-        pass
-
-    if app is not None:
-        try:
-            from opentelemetry.instrumentation.flask import FlaskInstrumentor
-
-            FlaskInstrumentor().instrument_app(app)
-        except ImportError:
-            pass
-
     _initialized = True
 
 
+#Initializes tracing: gates OTLP on endpoint + X_ORG_ID, else console; registers
+#W3C propagation and opportunistically instruments HTTP libs that are installed.
+def init():
+    _init_provider()
+    try:
+        from opentelemetry.instrumentation.requests import RequestsInstrumentor
+        RequestsInstrumentor().instrument()
+    except Exception:
+        pass
+    try:
+        from opentelemetry.instrumentation.flask import FlaskInstrumentor
+        FlaskInstrumentor().instrument()  # global: instruments Flask apps created after this call
+    except Exception:
+        pass
+    atexit.register(_flush)
+
+
+#flush spans at interpreter exit
+def _flush():
+    try:
+        from opentelemetry import trace
+        trace.get_tracer_provider().force_flush()
+    except Exception:
+        pass
+
+
 #Gets a tracer for manual spans.
-def get_tracer(name: str = "cloudops"):
+def get_tracer(name: str = "otel"):
     from opentelemetry import trace
 
     return trace.get_tracer(name)

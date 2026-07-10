@@ -2,7 +2,7 @@
 import unittest
 from unittest.mock import patch
 
-from cloudops_otel_traces.tracer import (
+from otel_traces.tracer import (
     _normalize_endpoint,
     _org_id,
     _parse_list,
@@ -50,14 +50,14 @@ class TracerHelperTests(unittest.TestCase):
         with patch.dict("os.environ", {
             "OTEL_SERVICE_NAME": "order-api",
             "KUBERNETES_SERVICE_HOST": "10.0.0.1",
-            "AKS_CLUSTER_NAME": "cloudops-dev",
-            "POD_NAMESPACE": "cloudops",
+            "AKS_CLUSTER_NAME": "demo-cluster",
+            "POD_NAMESPACE": "demo",
         }, clear=True):
             attrs = _runtime_resource_attributes()
         self.assertEqual(attrs["service.name"], "order-api")
         self.assertEqual(attrs["cloud.provider"], "azure")
         self.assertEqual(attrs["cloud.platform"], "azure_aks")
-        self.assertEqual(attrs["k8s.cluster.name"], "cloudops-dev")
+        self.assertEqual(attrs["k8s.cluster.name"], "demo-cluster")
 
         with patch.dict("os.environ", {
             "FUNCTIONS_EXTENSION_VERSION": "~4",
@@ -66,6 +66,12 @@ class TracerHelperTests(unittest.TestCase):
             attrs = _runtime_resource_attributes()
         self.assertEqual(attrs["cloud.platform"], "azure_functions")
         self.assertEqual(attrs["faas.name"], "orders-func")
+
+
+#init is no-arg and never throws even with no frameworks importable
+def test_init_no_arg_never_throws(monkeypatch):
+    import otel_traces
+    otel_traces.init()
 
 
 if __name__ == "__main__":

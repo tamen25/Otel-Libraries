@@ -304,9 +304,9 @@ def test_atexit_flush_registered():
 - Consumes: nothing from other tasks.
 - Produces: dist `otel-traces`, wheel `otel_traces-0.1.0-py3-none-any.whl`; public API `from otel_traces import init; init()` — **no framework argument**.
 
-- [ ] **Step 1:** `git mv` the module dir; update `pyproject.toml` name → `"otel-traces"` + hatch path; sed `cloudops_otel_traces` → `otel_traces` across src/tests/README (same pattern as Task 4).
+- [x] **Step 1:** `git mv` the module dir; update `pyproject.toml` name → `"otel-traces"` + hatch path; sed `cloudops_otel_traces` → `otel_traces` across src/tests/README (same pattern as Task 4).
 
-- [ ] **Step 2: Replace `init_tracing(app)` with no-arg `init()`** in `tracer.py`. Keep ALL existing provider/exporter/gating logic in place; only the public entry and instrumentation registration change:
+- [x] **Step 2: Replace `init_tracing(app)` with no-arg `init()`** in `tracer.py`. Keep ALL existing provider/exporter/gating logic in place; only the public entry and instrumentation registration change:
 
 ```python
 #Initializes tracing: gates OTLP on endpoint + X_ORG_ID, else console; registers
@@ -335,7 +335,7 @@ def _flush():
 
 If the current file inlines provider setup inside `init_tracing`, extract it to `_init_provider()` verbatim. Export `init` from `__init__.py`; delete `init_tracing`.
 
-- [ ] **Step 3: Tests** — update existing tests calling `init_tracing(app)` to call `init()` (drop Flask fixtures where they only existed to satisfy the old signature). Add:
+- [x] **Step 3: Tests** — update existing tests calling `init_tracing(app)` to call `init()` (drop Flask fixtures where they only existed to satisfy the old signature). Add:
 
 ```python
 #init is no-arg and never throws even with no frameworks importable
@@ -344,9 +344,9 @@ def test_init_no_arg_never_throws(monkeypatch):
     otel_traces.init()
 ```
 
-- [ ] **Step 4:** `PYTHONPATH=src python -m pytest -q` — all pass.
+- [x] **Step 4:** `PYTHONPATH=src python -m pytest -q` — all pass.
 
-- [ ] **Step 5: Commit**: `git commit -m "feat(python-traces): rename to otel-traces, no-arg init() with opportunistic instrumentation, atexit flush"`.
+- [x] **Step 5: Commit**: `git commit -m "feat(python-traces): rename to otel-traces, no-arg init() with opportunistic instrumentation, atexit flush"`.
 
 ---
 
