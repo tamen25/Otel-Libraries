@@ -11,7 +11,7 @@ import {
 } from "@opentelemetry/sdk-trace-base";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { Resource } from "@opentelemetry/resources";
+import { defaultResource, resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import api, {
   Context,
@@ -224,14 +224,7 @@ class TraceInstrumentation {
 
     addRuntimeResourceAttributes(resourceAttributes);
 
-    this.tracerProvider = new NodeTracerProvider(
-      configureTracer({
-        resource: Resource.default().merge(new Resource(resourceAttributes)),
-        sampler: new ParentBasedSampler({
-          root: new TraceIdRatioBasedSampler(traceRatio),
-        }),
-      }),
-    );
+    const resource = defaultResource().merge(resourceFromAttributes(resourceAttributes));
 
     try {
       const exportersList = parseStringArray(process.env.OTEL_BACKEND_EXPORTERS, ["console"]);
@@ -239,11 +232,15 @@ class TraceInstrumentation {
 
       const backend = exportersList.map((item) => item.toLowerCase())[0];
 
+      // OTel JS 2.x: span processors are passed to the NodeTracerProvider
+      // constructor (addSpanProcessor was removed). Build the list first.
+      let spanProcessors: SpanProcessor[];
+
       switch (backend) {
         case "otel":
           if (isExporterParametersEmpty(exporterParameters) || !orgId()) {
             diag.debug("TraceInstrumentation endpoint or X_ORG_ID is empty. Switching tracer to console.");
-            this.tracerProvider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+            spanProcessors = [new SimpleSpanProcessor(new ConsoleSpanExporter())];
             break;
           }
 
@@ -253,14 +250,24 @@ class TraceInstrumentation {
               headers: orgIdHeaders(orgId()),
             }),
           );
-          this.tracerProvider.addSpanProcessor(this.batchProcessorConfig);
+          spanProcessors = [this.batchProcessorConfig];
           break;
 
         case "console":
         default:
-          this.tracerProvider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+          spanProcessors = [new SimpleSpanProcessor(new ConsoleSpanExporter())];
           break;
       }
+
+      this.tracerProvider = new NodeTracerProvider(
+        configureTracer({
+          resource,
+          sampler: new ParentBasedSampler({
+            root: new TraceIdRatioBasedSampler(traceRatio),
+          }),
+          spanProcessors,
+        }),
+      );
 
       let sdkRegistrationConfig: SDKRegistrationConfig = {};
       sdkRegistrationConfig = configureSdkRegistration(sdkRegistrationConfig);

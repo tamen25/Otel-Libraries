@@ -9,6 +9,9 @@ const http = require("http");
 
 const PYTHON_URL = process.env.PYTHON_URL || "http://python-app:8000/order";
 const PORT = 8090;
+// Restrict CORS to the demo frontend origin (override with ALLOWED_ORIGIN) rather
+// than a wildcard, so only the intended browser app can call this edge service.
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:5173";
 
 // Calls the downstream python service over the instrumented http module.
 function callPython() {
@@ -23,7 +26,8 @@ function callPython() {
 }
 
 const server = http.createServer(async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
 
   if (req.method === "OPTIONS") {

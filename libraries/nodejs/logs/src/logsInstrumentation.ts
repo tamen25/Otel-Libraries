@@ -16,7 +16,7 @@ import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
 import { OpenTelemetryTransportV3 } from "@opentelemetry/winston-transport";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
-import { Resource } from "@opentelemetry/resources";
+import { defaultResource, resourceFromAttributes } from "@opentelemetry/resources";
 import { randomUUID } from "crypto";
 import { env } from "process";
 import * as logsAPI from "@opentelemetry/api-logs";
@@ -287,13 +287,14 @@ export class LogsInstrumentation {
 
       addRuntimeResourceAttributes(resourceAttributes);
 
-      const resource = Resource.default().merge(new Resource(resourceAttributes));
+      const resource = defaultResource().merge(resourceFromAttributes(resourceAttributes));
 
       this.setupExporters();
 
       if (this.exporters) {
-        this.loggerProvider = new LoggerProvider({ resource });
-        this.loggerProvider.addLogRecordProcessor(this.exporters);
+        // OTel JS 2.x: processors are passed to the LoggerProvider constructor
+        // (addLogRecordProcessor was removed).
+        this.loggerProvider = new LoggerProvider({ resource, processors: [this.exporters] });
         logsAPI.logs.setGlobalLoggerProvider(this.loggerProvider);
         diag.debug("Logs Instrumentation Started");
       }
@@ -347,10 +348,13 @@ export class LogsInstrumentation {
     backend: keyof ExporterParameters,
   ): LogRecordProcessor {
     const config = exporterParameters[backend]?.logs;
-    return new BatchLogRecordProcessor(new OTLPLogExporter({
-      url: config?.url,
-      headers: orgIdHeaders(orgId()),
-    }));
+    // OTel JS 2.x: BatchLogRecordProcessor takes an options object with `exporter`.
+    return new BatchLogRecordProcessor({
+      exporter: new OTLPLogExporter({
+        url: config?.url,
+        headers: orgIdHeaders(orgId()),
+      }),
+    });
   }
 
   // Initializes winston.
