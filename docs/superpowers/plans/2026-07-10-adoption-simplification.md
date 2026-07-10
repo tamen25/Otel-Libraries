@@ -399,9 +399,9 @@ grep -ri cloudops src pom.xml README.md   # fix every remaining hit (README text
 - Consumes: existing `startServerSpan(String, Map<String,String>)`, `startClientSpan(String)`, `injectHeaders()`, `exportSpans()` (public, unchanged).
 - Produces: `otel:otel-traces:0.1.0`; `otel.traces.Tracer.init()`; `tracer.tracedClient()` returning `TracedHttpClient` with `<T> HttpResponse<T> send(HttpRequest, BodyHandler<T>)`; `tracer.wrap(String name, HttpHandler handler)` returning a wrapped `com.sun.net.httpserver.HttpHandler`. Task 10's demo app uses exactly these.
 
-- [ ] **Step 1: Mechanical rename** (same recipe as Task 6, substituting `traces`, `CloudOpsTracer` → `Tracer`, `initializeTracer` → `init`). Run the `grep -ri cloudops` sweep and fix all hits.
+- [x] **Step 1: Mechanical rename** (same recipe as Task 6, substituting `traces`, `CloudOpsTracer` → `Tracer`, `initializeTracer` → `init`). Run the `grep -ri cloudops` sweep and fix all hits.
 
-- [ ] **Step 2: Write the failing test** `TracedHttpClientTest.java`:
+- [x] **Step 2: Write the failing test** `TracedHttpClientTest.java`:
 
 ```java
 package otel.traces;
@@ -465,9 +465,9 @@ class TracedHttpClientTest {
 }
 ```
 
-- [ ] **Step 3:** `mvn -q -f <abs>/libraries/java/traces/pom.xml verify` — expect FAIL: `cannot find symbol: method tracedClient()` / `wrap(...)`.
+- [x] **Step 3:** `mvn -q -f <abs>/libraries/java/traces/pom.xml verify` — expect FAIL: `cannot find symbol: method tracedClient()` / `wrap(...)`.
 
-- [ ] **Step 4: Implement.** New file `TracedHttpClient.java`:
+- [x] **Step 4: Implement.** New file `TracedHttpClient.java`:
 
 ```java
 package otel.traces;
@@ -544,9 +544,9 @@ And in `Tracer.java` add:
 
 Also add the shutdown-hook flush inside `Tracer.init()` (once): `Runtime.getRuntime().addShutdownHook(new Thread(instance::exportSpans));`
 
-- [ ] **Step 5:** `mvn -q verify` again — expect BUILD SUCCESS, new tests + existing suite green.
+- [x] **Step 5:** `mvn -q verify` again — expect BUILD SUCCESS, new tests + existing suite green.
 
-- [ ] **Step 6: Commit**: `git commit -m "feat(java-traces): rename to otel:otel-traces with Tracer.init(), add tracedClient()/wrap() helpers and shutdown flush"`.
+- [x] **Step 6: Commit**: `git commit -m "feat(java-traces): rename to otel:otel-traces with Tracer.init(), add tracedClient()/wrap() helpers and shutdown flush"`.
 
 ---
 

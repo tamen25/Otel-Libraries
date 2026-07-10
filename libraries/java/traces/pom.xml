@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This project file configures java traces for CloudOps. -->
+<!-- This project file configures the java otel traces library. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.cloudops</groupId>
+  <groupId>otel</groupId>
   <artifactId>otel-traces</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
 
-  <name>CloudOps OTel Traces</name>
-  <description>CloudOps tracing helper for Java services.</description>
+  <name>OTel Traces</name>
+  <description>OpenTelemetry tracing helper for Java services.</description>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>

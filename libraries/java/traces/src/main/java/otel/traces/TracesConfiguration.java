@@ -1,5 +1,5 @@
 // This file contains traces configuration logic for OTel traces.
-package com.cloudops.otel.traces;
+package otel.traces;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
