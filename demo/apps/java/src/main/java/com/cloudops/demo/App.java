@@ -52,19 +52,23 @@ public final class App {
       if (COUNT.incrementAndGet() % 5 == 0) {
         LOG.warn("downstream latency high (simulated)", "order_id", orderId, "count", COUNT.get());
       }
-      try {
+      // Wrap the outbound call in a CLIENT span so java-app -> dotnet-app forms a
+      // service-graph edge, and inject the context within it for propagation.
+      Span clientSpan = TRACER.startClientSpan("GET /finalize");
+      try (Scope clientScope = clientSpan.makeCurrent()) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
             .uri(URI.create(DOTNET_URL + "?order_id=" + orderId)).GET();
-        // Inject the current trace context so the downstream .NET service stays on the same trace.
         TRACER.injectHeaders().forEach(builder::header);
         HttpResponse<String> resp = CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         LOG.info("dotnet responded", "order_id", orderId, "status", resp.statusCode());
         respond(ex, 200, "processed");
       } catch (Exception e) {
+        clientSpan.recordException(e);
         span.recordException(e);
         LOG.error("dotnet call failed", "order_id", orderId, "error", e.getMessage());
         respond(ex, 502, "downstream error");
       } finally {
+        clientSpan.end();
         LOG.exportLogs();
       }
     } finally {

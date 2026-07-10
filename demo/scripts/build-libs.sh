@@ -16,5 +16,9 @@ echo "==> Building .NET nupkgs (logs + traces)"
 ( cd "$ROOT/libraries/dotnet/logs" && dotnet pack -c Release -o "$ART" )
 ( cd "$ROOT/libraries/dotnet/traces" && dotnet pack -c Release -o "$ART" )
 
+echo "==> Packing Node.js tarballs (logs + traces)"
+( cd "$ROOT/libraries/nodejs/logs" && npm run build >/dev/null 2>&1 && npm pack --pack-destination "$ART" >/dev/null )
+( cd "$ROOT/libraries/nodejs/traces" && npm run build >/dev/null 2>&1 && npm pack --pack-destination "$ART" >/dev/null )
+
 echo "==> Artifacts in $ART:"
 ls -1 "$ART"

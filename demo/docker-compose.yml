@@ -14,6 +14,18 @@ services:
     command: -config.file=/etc/tempo/config.yaml
     volumes:
       - ./tempo/config.yaml:/etc/tempo/config.yaml:ro
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.111.0
@@ -40,6 +52,7 @@ services:
     depends_on:
       - loki
       - tempo
+      - prometheus
 
   python-app:
     build:
@@ -88,12 +101,41 @@ services:
     depends_on:
       - otel-collector
 
+  node-edge:
+    build:
+      context: .
+      dockerfile: apps/node/Dockerfile
+    environment:
+      OTEL_SERVICE_NAME: node-edge
+      OTEL_BACKEND_EXPORTERS: otel
+      OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
+      OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
+      PYTHON_URL: http://python-app:8000/order
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+    depends_on:
+      - otel-collector
+      - python-app
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+    depends_on:
+      - node-edge
+
   loadgen:
     build:
       context: .
       dockerfile: apps/loadgen/Dockerfile
     environment:
-      TARGET: http://python-app:8000/order
+      TARGET: http://node-edge:8090/api/order
     restart: unless-stopped
     depends_on:
-      - python-app
+      - node-edge

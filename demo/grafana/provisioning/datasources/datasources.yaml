@@ -17,6 +17,12 @@ datasources:
           datasourceUid: tempo
           urlDisplayLabel: 'View trace'
 
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+
   - name: Tempo
     type: tempo
     uid: tempo
@@ -33,6 +39,9 @@ datasources:
         tags:
           - key: 'service.name'
             value: 'service_name'
+      # Draw the service-graph flow chart from Tempo's generated metrics in Prometheus.
+      serviceMap:
+        datasourceUid: prometheus
       nodeGraph:
         enabled: true
       search:

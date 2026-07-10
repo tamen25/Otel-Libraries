@@ -11,6 +11,20 @@ distributor:
 ingester:
   max_block_duration: 5m
 
+# Generate service-graph + span metrics from spans and remote-write them to
+# Prometheus, so Grafana can draw the service-graph flow chart.
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+  traces_storage:
+    path: /var/tempo/generator/traces
+
 storage:
   trace:
     backend: local
@@ -18,3 +32,8 @@ storage:
       path: /var/tempo/blocks
     wal:
       path: /var/tempo/wal
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics]
