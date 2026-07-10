@@ -123,8 +123,8 @@ test("runtime resource attributes identify Azure Functions, AKS and Container Ap
   resetEnv({
     OTEL_BACKEND_EXPORTERS: "console",
     KUBERNETES_SERVICE_HOST: "10.0.0.1",
-    K8S_CLUSTER_NAME: "cloudops-dev",
-    POD_NAMESPACE: "cloudops",
+    K8S_CLUSTER_NAME: "demo-cluster",
+    POD_NAMESPACE: "demo",
     HOSTNAME: "orders-pod",
     CONTAINER_NAME: "orders",
   });
@@ -135,8 +135,8 @@ test("runtime resource attributes identify Azure Functions, AKS and Container Ap
   addKubernetesAttributes(kubernetesAttributes);
   assert.equal(kubernetesAttributes["cloud.provider"], "azure");
   assert.equal(kubernetesAttributes["cloud.platform"], "azure_aks");
-  assert.equal(kubernetesAttributes["k8s.cluster.name"], "cloudops-dev");
-  assert.equal(kubernetesAttributes["k8s.namespace.name"], "cloudops");
+  assert.equal(kubernetesAttributes["k8s.cluster.name"], "demo-cluster");
+  assert.equal(kubernetesAttributes["k8s.namespace.name"], "demo");
   assert.equal(kubernetesAttributes["k8s.pod.name"], "orders-pod");
   assert.equal(kubernetesAttributes["container.name"], "orders");
 
@@ -262,4 +262,10 @@ test("service registry gates propagation to supported services", () => {
   // cosmosdb is not a valid propagation service, so it is gated out.
   assert.equal(registry.requestPropagationAttributes({}, "cosmosdb"), undefined);
   assert.equal(registry.retrievePropagationAttributes({}, "cosmosdb"), undefined);
+});
+
+test("register entry initialises the tracer as a side effect", () => {
+  require("../dist/register.js");
+  const { tracer } = require("../dist/index.js");
+  assert.ok(tracer, "tracer singleton exists after register import");
 });

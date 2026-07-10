@@ -200,7 +200,7 @@ test("shutdown flush hooks are registered after init", () => {
 **Interfaces:**
 - Produces: `@otel/traces@0.1.0` with entry points `.` (exports `tracer`, `AzureService`) and `./register` (side-effect init). Pack filename `otel-traces-0.1.0.tgz`.
 
-- [ ] **Step 1:** `package.json`: name → `"@otel/traces"`, and add the exports map (keep `main`/`types`):
+- [x] **Step 1:** `package.json`: name → `"@otel/traces"`, and add the exports map (keep `main`/`types`):
 
 ```json
   "exports": {
@@ -209,7 +209,7 @@ test("shutdown flush hooks are registered after init", () => {
   },
 ```
 
-- [ ] **Step 2: Create `src/register.ts`**:
+- [x] **Step 2: Create `src/register.ts`**:
 
 ```ts
 // Side-effect entry point: `require("@otel/traces/register")` (or
@@ -218,7 +218,7 @@ test("shutdown flush hooks are registered after init", () => {
 import "./index";
 ```
 
-- [ ] **Step 3: Add shutdown flush** in `traceInstrumentation.ts` (call at end of successful init, mirroring Task 2's pattern):
+- [x] **Step 3: Add shutdown flush** in `traceInstrumentation.ts` (call at end of successful init, mirroring Task 2's pattern):
 
 ```ts
   private registerShutdownFlush(): void {
@@ -231,9 +231,9 @@ import "./index";
   }
 ```
 
-- [ ] **Step 4:** De-brand strings: `grep -ri cloudops libraries/nodejs/traces/src libraries/nodejs/traces/tests libraries/nodejs/traces/package.json` → fix all (e.g., tracer name `"${serviceName || "cloudops"}-tracer"` → `"${serviceName || "otel"}-tracer"`).
+- [x] **Step 4:** De-brand strings: `grep -ri cloudops libraries/nodejs/traces/src libraries/nodejs/traces/tests libraries/nodejs/traces/package.json` → fix all (e.g., tracer name `"${serviceName || "cloudops"}-tracer"` → `"${serviceName || "otel"}-tracer"`).
 
-- [ ] **Step 5: New test:**
+- [x] **Step 5: New test:**
 
 ```js
 test("register entry initialises the tracer as a side effect", () => {
@@ -243,9 +243,9 @@ test("register entry initialises the tracer as a side effect", () => {
 });
 ```
 
-- [ ] **Step 6:** `cd libraries/nodejs/traces && npm run test:coverage` — all pass, gates hold (register.ts is excluded from coverage automatically only if trivially covered — it will be, since the test imports it).
+- [x] **Step 6:** `cd libraries/nodejs/traces && npm run test:coverage` — all pass, gates hold (register.ts is excluded from coverage automatically only if trivially covered — it will be, since the test imports it).
 
-- [ ] **Step 7: Commit**: `git commit -m "feat(nodejs-traces): rename to @otel/traces, add /register entry and shutdown auto-flush"`.
+- [x] **Step 7: Commit**: `git commit -m "feat(nodejs-traces): rename to @otel/traces, add /register entry and shutdown auto-flush"`.
 
 ---
 

@@ -280,11 +280,22 @@ class TraceInstrumentation {
         instrumentations: [new HttpInstrumentation()],
       });
 
-      this.tracer = trace.getTracer(`${this.serviceName || "cloudops"}-tracer`);
+      this.tracer = trace.getTracer(`${this.serviceName || "otel"}-tracer`);
+      this.registerShutdownFlush();
       this.isInitialized = true;
     } catch (e) {
       diag.debug("OTEL register failed", e);
     }
+  }
+
+  // Best-effort flush at process shutdown so batched spans are not lost.
+  private registerShutdownFlush(): void {
+    process.once("beforeExit", () => {
+      void this.exportSpans().catch(() => {});
+    });
+    process.once("SIGTERM", () => {
+      void this.exportSpans().catch(() => {}).finally(() => process.exit(143));
+    });
   }
 
   /**

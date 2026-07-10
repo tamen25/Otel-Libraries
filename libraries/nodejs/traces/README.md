@@ -1,9 +1,9 @@
-<!-- This document explains readme for CloudOps. -->
-# @cloudops/otel-traces
+<!-- This document explains the readme for the otel traces library. -->
+# @otel/traces
 
-CloudOps OpenTelemetry traces helper for Node.js services.
+OpenTelemetry traces helper for Node.js services.
 
-Aligned with `@cloudops/otel-logs` in this repo: `console`/`otel` exporters,
+Aligned with `@otel/logs` in this repo: `console`/`otel` exporters,
 Azure runtime detection (Functions / Container Apps / App Service / AKS with
 `cloud.provider=azure`), and X_ORG_ID/`X-OrgId` authentication.
 
@@ -16,8 +16,15 @@ service-specific attributes on top.
 
 ## Usage
 
+Initialise tracing with a single side-effect import, ideally before any app
+module loads (or zero-code via `node -r @otel/traces/register`):
+
 ```ts
-import { tracer, AzureService } from "@cloudops/otel-traces";
+require("@otel/traces/register");
+```
+
+```ts
+import { tracer, AzureService } from "@otel/traces";
 
 const span = tracer.startBasicSpan("handle-order");
 try {
@@ -31,7 +38,7 @@ try {
 
 // Azure-service-aware spans
 const busSpan = tracer.startAzureSpan(AzureService.SERVICE_BUS_TOPIC, {
-  serviceBusTopicAttributes: { topicName: "orders", namespace: "cloudops" },
+  serviceBusTopicAttributes: { topicName: "orders", namespace: "orders-ns" },
 });
 busSpan?.end();
 ```
