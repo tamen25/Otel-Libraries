@@ -1,0 +1,58 @@
+// Grafana Alloy collector for the demo: OTLP in -> logs to Loki, traces to Tempo.
+otelcol.receiver.otlp "default" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  output {
+    logs   = [otelcol.processor.transform.service_name.input]
+    traces = [otelcol.processor.batch.traces.input]
+  }
+}
+
+// Promote service.name to a service_name resource attribute Loki labels on
+// (mirrors the old collector's `resource` processor).
+otelcol.processor.transform "service_name" {
+  error_mode = "ignore"
+  log_statements {
+    context    = "resource"
+    statements = ["set(attributes[\"service_name\"], attributes[\"service.name\"])"]
+  }
+  output {
+    logs = [otelcol.processor.batch.logs.input]
+  }
+}
+
+otelcol.processor.batch "logs" {
+  output {
+    logs = [otelcol.exporter.otlphttp.loki.input, otelcol.exporter.debug.default.input]
+  }
+}
+
+otelcol.processor.batch "traces" {
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// Loki accepts OTLP natively on /otlp.
+otelcol.exporter.otlphttp "loki" {
+  client {
+    endpoint = "http://loki:3100/otlp"
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+otelcol.exporter.debug "default" {
+  verbosity = "normal"
+}

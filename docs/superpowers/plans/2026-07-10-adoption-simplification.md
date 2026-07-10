@@ -35,7 +35,7 @@
 **Interfaces:**
 - Produces: OTLP/HTTP ingest at `http://alloy:4318` (host `localhost:4318`), logs → Loki with `service_name` label, traces → Tempo. Apps keep the exact same OTLP contract.
 
-- [ ] **Step 1: Write `demo/alloy/config.alloy`** (mirrors the old collector pipelines exactly):
+- [x] **Step 1: Write `demo/alloy/config.alloy`** (mirrors the old collector pipelines exactly):
 
 ```alloy
 // Grafana Alloy collector for the demo: OTLP in -> logs to Loki, traces to Tempo.
@@ -98,7 +98,7 @@ otelcol.exporter.debug "default" {
 }
 ```
 
-- [ ] **Step 2: Update `demo/docker-compose.yml`.** Replace the `otel-collector` service block with:
+- [x] **Step 2: Update `demo/docker-compose.yml`.** Replace the `otel-collector` service block with:
 
 ```yaml
   alloy:
@@ -115,9 +115,9 @@ otelcol.exporter.debug "default" {
 
 Then across ALL app services (`python-app`, `java-app`, `dotnet-app`, `node-edge`): set `OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318` and change `depends_on: [otel-collector]` → `alloy`. (If `grafana/alloy:v1.5.1` fails to pull, use the newest `v1.x` tag that pulls and note it in the commit body.)
 
-- [ ] **Step 3: Delete the old collector config**: `git rm -r demo/collector`
+- [x] **Step 3: Delete the old collector config**: `git rm -r demo/collector`
 
-- [ ] **Step 4: Validate + deploy**:
+- [x] **Step 4: Validate + deploy**:
 
 ```bash
 docker compose -f demo/docker-compose.yml config -q          # expect: silence (valid)
@@ -125,7 +125,7 @@ docker compose -f demo/docker-compose.yml up -d --remove-orphans alloy python-ap
 docker compose -f demo/docker-compose.yml logs alloy | tail -20   # expect: no error-level lines
 ```
 
-- [ ] **Step 5: Verify E2E through Alloy** (loadgen is already driving traffic):
+- [x] **Step 5: Verify E2E through Alloy** (loadgen is already driving traffic):
 
 ```bash
 # logs land in Loki with service_name label:
@@ -139,7 +139,7 @@ docker compose -f demo/docker-compose.yml exec -T python-app python3 -c "import 
 # expect: a number >= 4 (batches from 4 services)
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add demo/alloy demo/docker-compose.yml demo/README.md

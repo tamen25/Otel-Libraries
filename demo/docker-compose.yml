@@ -26,11 +26,11 @@ services:
     ports:
       - "9009:9009"
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.111.0
-    command: ["--config=/etc/collector/config.yaml"]
+  alloy:
+    image: grafana/alloy:v1.5.1
+    command: ["run", "--storage.path=/var/lib/alloy/data", "--stability.level=experimental", "/etc/alloy/config.alloy"]
     volumes:
-      - ./collector/config.yaml:/etc/collector/config.yaml:ro
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
     ports:
       - "4318:4318"
     depends_on:
@@ -62,12 +62,12 @@ services:
       OTEL_BACKEND_EXPORTERS: otel
       OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
       OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
       X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
       JAVA_URL: http://java-app:8080/process
     restart: unless-stopped
     depends_on:
-      - otel-collector
+      - alloy
 
   java-app:
     build:
@@ -78,12 +78,12 @@ services:
       OTEL_BACKEND_EXPORTERS: otel
       OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
       OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
       X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
       DOTNET_URL: http://dotnet-app:8081/finalize
     restart: unless-stopped
     depends_on:
-      - otel-collector
+      - alloy
 
   dotnet-app:
     build:
@@ -94,11 +94,11 @@ services:
       OTEL_BACKEND_EXPORTERS: otel
       OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
       OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
       X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
     restart: unless-stopped
     depends_on:
-      - otel-collector
+      - alloy
 
   node-edge:
     build:
@@ -109,14 +109,14 @@ services:
       OTEL_BACKEND_EXPORTERS: otel
       OTEL_LOG_LEVEL: ${DEMO_LOG_LEVEL:-info,warn,error,debug}
       OTEL_LOGS_SAMPLING_RATE: ${DEMO_SAMPLING_RATE:-100}
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
       X_ORG_ID: ${DEMO_ORG_ID:-demo-org}
       PYTHON_URL: http://python-app:8000/order
     ports:
       - "8090:8090"
     restart: unless-stopped
     depends_on:
-      - otel-collector
+      - alloy
       - python-app
 
   frontend:

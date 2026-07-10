@@ -1,17 +1,17 @@
 # OTel Logs Demo Stack
 
-Local **OTel Collector → Loki → Grafana** pipeline (plus a dormant **Tempo**
+Local **Grafana Alloy → Loki → Grafana** pipeline (plus a dormant **Tempo**
 traces backend) exercised by three chained sample apps that log via the CloudOps
 OTel logs libraries:
 
 ```
 loadgen → python-app → java-app → dotnet-app
-              └──────────── OTLP/HTTP logs ────────────→ collector → Loki → Grafana
+              └──────────── OTLP/HTTP logs ────────────→ alloy → Loki → Grafana
 ```
 
 Each app logs through its own CloudOps OTel logs library (Python wheel, Java jar,
-.NET nupkg), all configured with `OTEL_BACKEND_EXPORTERS=otel` and pointed at the
-collector. The collector fans logs into Loki; Grafana visualizes them with
+.NET nupkg), all configured with `OTEL_BACKEND_EXPORTERS=otel` and pointed at
+Alloy. Alloy fans logs into Loki; Grafana visualizes them with
 auto-provisioned dashboards.
 
 ## Prerequisites
@@ -80,9 +80,9 @@ docker compose -f demo/docker-compose.yml down -v       # stop + wipe data
 
 ## Tracing (future)
 
-Tempo and the collector's traces pipeline are already running but idle — apps
-emit no spans yet. Adding app-side spans later needs **no infra change**: the
-collector already accepts OTLP traces and exports them to Tempo, and the Loki
+Tempo and Alloy's traces pipeline are already running but idle — apps
+emit no spans yet. Adding app-side spans later needs **no infra change**: Alloy
+already accepts OTLP traces and exports them to Tempo, and the Loki
 datasource is pre-wired with a derived `TraceID` field that links log lines to
 Tempo once traces carry a `trace_id`.
 
@@ -94,5 +94,5 @@ Tempo once traces carry a `trace_id`.
   error-level dashboards with real data.
 - **Rebuild after changing a library:** re-run `bash demo/scripts/build-libs.sh`
   then `docker compose -f demo/docker-compose.yml up -d --build`.
-- **Inspect what the collector receives:** `docker compose -f demo/docker-compose.yml logs otel-collector`
+- **Inspect what Alloy receives:** `docker compose -f demo/docker-compose.yml logs alloy`
   (the `debug` exporter prints per-record detail).
