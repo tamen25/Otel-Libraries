@@ -1,4 +1,4 @@
-<!-- This project file configures dotnet traces tests for CloudOps. -->
+<!-- This project file configures the dotnet traces library tests. -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -14,6 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CloudOps.Otel.Traces.csproj" />
+    <ProjectReference Include="..\Otel.Traces.csproj" />
   </ItemGroup>
 </Project>

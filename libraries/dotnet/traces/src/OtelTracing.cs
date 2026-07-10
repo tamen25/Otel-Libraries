@@ -5,9 +5,9 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace CloudOps.Otel.Traces;
+namespace Otel.Traces;
 
-public static class CloudOpsTracing
+public static class OtelTracing
 {
     // Hardcoded fallbacks for the OTLP traces endpoint and org id. Env vars
     // override these; leave them empty to fall back to no OTLP export. X_ORG_ID
@@ -15,10 +15,10 @@ public static class CloudOpsTracing
     public const string DefaultTracesEndpoint = "";
     public const string DefaultXOrgId = "";
 
-    // Registers CloudOps tracing: gates OTLP on both an endpoint URL and X_ORG_ID,
+    // Registers tracing: gates OTLP on both an endpoint URL and X_ORG_ID,
     // and adds ASP.NET Core + HttpClient auto-instrumentation so W3C trace context
     // propagates across services automatically.
-    public static IServiceCollection AddCloudOpsTracing(this IServiceCollection services)
+    public static IServiceCollection AddOtelTraces(this IServiceCollection services)
     {
         var exporters = ParseExporters(Environment.GetEnvironmentVariable("OTEL_BACKEND_EXPORTERS"));
         var endpoint = ResolveEndpoint();

@@ -1,13 +1,12 @@
-<!-- This project file configures dotnet traces for CloudOps. -->
+<!-- This project file configures the dotnet traces library. -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>CloudOps.Otel.Traces</PackageId>
+    <PackageId>Otel.Traces</PackageId>
     <Version>0.1.0</Version>
-    <Authors>CloudOps</Authors>
-    <Description>CloudOps tracing helper for .NET services.</Description>
+    <Description>OpenTelemetry tracing helper for .NET services.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
@@ -20,7 +19,7 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>CloudOps.Otel.Traces.Tests</_Parameter1>
+      <_Parameter1>Otel.Traces.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 

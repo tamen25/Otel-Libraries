@@ -1,22 +1,21 @@
-<!-- This document explains readme for CloudOps. -->
-# CloudOps.Otel.Traces
+# Otel.Traces
 
-.NET tracing helper for CloudOps services.
+.NET tracing helper for services.
 
 ```csharp
-using CloudOps.Otel.Traces;
+using Otel.Traces;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddCloudOpsTracing();
+builder.Services.AddOtelTraces();
 var app = builder.Build();
 ```
 
-`AddCloudOpsTracing` gates OTLP export on **both** a resolved endpoint URL and
+`AddOtelTraces` gates OTLP export on **both** a resolved endpoint URL and
 `X_ORG_ID` (sent as the `X-OrgId` header); otherwise no OTLP exporter is added.
 It registers ASP.NET Core + HttpClient auto-instrumentation, so incoming and
 outgoing HTTP calls create spans and propagate W3C `tracecontext` automatically.
 
-Configuration mirrors the other CloudOps libraries:
+Configuration mirrors the other libraries:
 
 - `OTEL_BACKEND_EXPORTERS`: `console` (default) or `otel`.
 - `OTEL_SERVICE_NAME` / `OTEL_RESOURCE_ATTRIBUTES`: resource identity; Azure
@@ -26,5 +25,5 @@ Configuration mirrors the other CloudOps libraries:
   else the `DefaultTracesEndpoint` constant.
 - `X_ORG_ID`: authentication key (or `DefaultXOrgId`). Required for OTLP export.
 
-Logs emitted by `CloudOps.Otel.Logs` within an active span automatically carry
+Logs emitted by `Otel.Logs` within an active span automatically carry
 `otel-trace-id` / `otel-span-id`, so logs and traces correlate in Grafana.
