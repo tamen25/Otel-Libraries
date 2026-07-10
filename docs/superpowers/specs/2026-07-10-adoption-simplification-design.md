@@ -131,26 +131,58 @@ still required in Functions/serverless where the process outlives invocations.
 
 Sampling logic, X-OrgId header gating, Azure runtime detection
 (Functions / Container Apps / App Service / AKS), console/OTLP exporters,
-per-signal tests and coverage gates, demo stack architecture
-(collector → Loki/Tempo/Mimir → Grafana), and the OTel SDK versions from the
-2026-07-10 security patch (Node OTel JS 2.x line).
+per-signal tests and coverage gates, the demo's storage/visualization layer
+(Loki / Tempo / Mimir / Grafana), and the OTel SDK versions from the
+2026-07-10 security patch (Node OTel JS 2.x line). The collector component
+itself changes — see §7.
 
 ## 6. Migration & verification
 
-1. Rename all four ports: source, tests, build manifests (pyproject, pom,
+1. Swap the demo collector to Grafana Alloy (§7) and verify the stack end to
+   end before touching the libraries (isolates infra risk from the rename).
+2. Rename all four ports: source, tests, build manifests (pyproject, pom,
    csproj, package.json), README titles.
-2. Implement the new API surface: Python no-arg `init()`, Node `register`
+3. Implement the new API surface: Python no-arg `init()`, Node `register`
    entry, Java `tracedClient()`/`wrap()`, shutdown flush in all ports.
-3. Update demo apps, Dockerfiles, `demo/scripts/build-libs.sh`, compose file to
+4. Update demo apps, Dockerfiles, `demo/scripts/build-libs.sh`, compose file to
    the new package names.
-4. Rewrite docs: `docs/USING-THE-LIBRARIES.md` (new names, one-liner quick
+5. Rewrite docs: `docs/USING-THE-LIBRARIES.md` (new names, one-liner quick
    starts, infra templates, corrected X_ORG_ID note), per-library READMEs,
-   `CLAUDE.md`.
-5. Verify: each port's unit suite green (existing coverage gates), then the
+   `CLAUDE.md`. Final `grep -ri cloudops` must return zero hits outside git
+   history.
+6. Verify: each port's unit suite green (existing coverage gates), then the
    live demo chain — one W3C trace across browser → node → python → java →
    dotnet, logs correlated in Grafana, service-graph edges present in Mimir.
 
 No back-compat shims; no existing consumers.
+
+## 7. Collector layer: Grafana Alloy (demo)
+
+The demo's `otel-collector` (opentelemetry-collector-contrib) is replaced by
+**Grafana Alloy** as the collector layer. The telemetry contract is identical —
+Alloy's `otelcol.*` components are the same collector engine — so **the
+libraries are untouched**: apps keep exporting OTLP/HTTP to port 4318 and only
+the hostname in `OTEL_EXPORTER_OTLP_ENDPOINT` changes (`http://alloy:4318`),
+proving that backend swaps are pure infra/env changes.
+
+Mapping from the current collector pipelines to Alloy components
+(`demo/alloy/config.alloy`, Alloy configuration syntax):
+
+| Today (collector YAML) | Alloy component |
+|---|---|
+| `receivers.otlp` (4318 http / 4317 grpc) | `otelcol.receiver.otlp` |
+| `processors.resource` (service_name upsert) | `otelcol.processor.attributes` (or transform) on the logs path |
+| `processors.batch` | `otelcol.processor.batch` |
+| `exporters.otlphttp/loki` → `http://loki:3100/otlp` | `otelcol.exporter.otlphttp` |
+| `exporters.otlp/tempo` → `tempo:4317` (insecure) | `otelcol.exporter.otlp` |
+| `exporters.debug` | `otelcol.exporter.debug` |
+
+Compose: service `otel-collector` → `alloy` (image `grafana/alloy`, pinned
+version), config volume-mounted, port 4318 published; all app services'
+`OTEL_EXPORTER_OTLP_ENDPOINT` repointed; `depends_on` updated. Loki, Tempo,
+Mimir, Grafana configs are unchanged. Verification: logs land in Loki with the
+`service_name` label intact, traces land in Tempo, service-graph metrics still
+reach Mimir, Grafana correlation works.
 
 ## Error handling
 
