@@ -1,6 +1,7 @@
-#This file contains logger logic for src cloudops OTel logs.
+#This file contains logger logic for the otel logs library.
 from __future__ import annotations
 
+import atexit
 import json
 import logging
 import os
@@ -228,7 +229,7 @@ def _runtime_resource_attributes() -> dict[str, str]:
 
 class LogSampler:
     #Initializes the requested work.
-    def __init__(self, logger: CloudOpsLogger) -> None:
+    def __init__(self, logger: Logger) -> None:
         self._logger = logger
         self._batch_map: dict[str, LogBatch] = {}
         self._probabilistic_sampling_rate = _sampling_rate()
@@ -267,7 +268,7 @@ class LogSampler:
         return random.random() <= threshold
 
 
-class CloudOpsLogger:
+class Logger:
     #Initializes the requested work.
     def __init__(self, name: str | None = None) -> None:
         self.resource_attributes = _runtime_resource_attributes()
@@ -278,7 +279,7 @@ class CloudOpsLogger:
         self._use_otel = False
         self._logger_provider: Any = None
         self._otel_logging_handler: logging.Handler | None = None
-        self._otel_python_logger = logging.getLogger(f"cloudops.otel.logs.{self._logger_name}")
+        self._otel_python_logger = logging.getLogger(f"otel.logs.{self._logger_name}")
         self._previous_trace_id: str | None = None
         self._unique_id: str | None = None
         self._sampler = LogSampler(self)
@@ -286,12 +287,12 @@ class CloudOpsLogger:
 
     @classmethod
     #Initializes logger.
-    def initialise_logger(cls) -> "CloudOpsLogger":
+    def initialise_logger(cls) -> "Logger":
         return logger
 
     @classmethod
     #Initializes logger.
-    def initialize_logger(cls) -> "CloudOpsLogger":
+    def initialize_logger(cls) -> "Logger":
         return logger
 
     #Handles info.
@@ -393,9 +394,9 @@ class CloudOpsLogger:
         self._otel_logging_handler = LoggingHandler(level=logging.DEBUG, logger_provider=self._logger_provider)
         self._otel_python_logger.handlers = [
             handler for handler in self._otel_python_logger.handlers
-            if not getattr(handler, "_cloudops_otel_handler", False)
+            if not getattr(handler, "_otel_handler", False)
         ]
-        setattr(self._otel_logging_handler, "_cloudops_otel_handler", True)
+        setattr(self._otel_logging_handler, "_otel_handler", True)
         self._otel_python_logger.addHandler(self._otel_logging_handler)
         self._use_otel = True
 
@@ -486,4 +487,7 @@ def _otel_available() -> bool:
     ])
 
 
-logger = CloudOpsLogger()
+logger = Logger()
+
+#flush batched logs at interpreter exit so shutdown does not lose telemetry
+atexit.register(logger.export_logs)

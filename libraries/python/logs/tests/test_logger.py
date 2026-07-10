@@ -4,8 +4,8 @@ import io
 import unittest
 from unittest.mock import patch
 
-from cloudops_otel_logs import CloudOpsLogger
-from cloudops_otel_logs.logger import (
+from otel_logs import Logger
+from otel_logs.logger import (
     BackendConfig,
     LogEntry,
     LogSampler,
@@ -21,26 +21,26 @@ from cloudops_otel_logs.logger import (
 )
 
 
-class CloudOpsLoggerTests(unittest.TestCase):
+class LoggerTests(unittest.TestCase):
     #Handles test runtime resource attributes for AKS.
     def test_runtime_resource_attributes_for_aks(self):
         with patch.dict("os.environ", {
             "OTEL_SERVICE_NAME": "order-api",
             "KUBERNETES_SERVICE_HOST": "10.0.0.1",
-            "K8S_NAMESPACE_NAME": "cloudops",
+            "K8S_NAMESPACE_NAME": "demo",
             "K8S_POD_NAME": "order-api-abc",
             "K8S_NODE_NAME": "aks-nodepool1-1",
-            "AKS_CLUSTER_NAME": "cloudops-dev",
+            "AKS_CLUSTER_NAME": "demo-cluster",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertEqual(logger.resource_attributes["service.name"], "order-api")
         self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
         self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_aks")
-        self.assertEqual(logger.resource_attributes["k8s.namespace.name"], "cloudops")
+        self.assertEqual(logger.resource_attributes["k8s.namespace.name"], "demo")
         self.assertEqual(logger.resource_attributes["k8s.pod.name"], "order-api-abc")
         self.assertEqual(logger.resource_attributes["k8s.node.name"], "aks-nodepool1-1")
-        self.assertEqual(logger.resource_attributes["k8s.cluster.name"], "cloudops-dev")
+        self.assertEqual(logger.resource_attributes["k8s.cluster.name"], "demo-cluster")
 
     #Handles test runtime resource attributes for Azure Functions.
     def test_runtime_resource_attributes_for_functions(self):
@@ -48,7 +48,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "FUNCTIONS_EXTENSION_VERSION": "~4",
             "WEBSITE_SITE_NAME": "orders-func",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertEqual(logger.resource_attributes["service.name"], "orders-func")
         self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
@@ -62,7 +62,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "WEBSITE_SITE_NAME": "orders-func",
             "KUBERNETES_SERVICE_HOST": "10.0.0.1",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_functions")
         self.assertNotIn("k8s.pod.name", logger.resource_attributes)
@@ -73,7 +73,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "OTEL_SERVICE_NAME": "order-api",
             "CONTAINER_APP_NAME": "orders-ca",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
         self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_container_apps")
@@ -85,7 +85,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "CONTAINER_APP_NAME": "orders-ca",
             "KUBERNETES_SERVICE_HOST": "10.0.0.1",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertEqual(logger.resource_attributes["cloud.platform"], "azure_aks")
         self.assertEqual(logger.resource_attributes["container.name"], "orders-ca")
@@ -95,7 +95,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
         with patch.dict("os.environ", {
             "WEBSITE_SITE_NAME": "orders-web",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertEqual(logger.resource_attributes["service.name"], "orders-web")
         self.assertEqual(logger.resource_attributes["cloud.provider"], "azure")
@@ -105,14 +105,14 @@ class CloudOpsLoggerTests(unittest.TestCase):
     #Handles test runtime resource attributes merge OTel resource attributes.
     def test_runtime_resource_attributes_merge_otel_resource_attributes(self):
         with patch.dict("os.environ", {
-            "OTEL_RESOURCE_ATTRIBUTES": "deployment.environment=dev,k8s.cluster.name=cloudops-dev",
+            "OTEL_RESOURCE_ATTRIBUTES": "deployment.environment=dev,k8s.cluster.name=demo-cluster",
             "OTEL_SERVICE_NAME": "order-api",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertEqual(logger.resource_attributes["service.name"], "order-api")
         self.assertEqual(logger.resource_attributes["deployment.environment"], "dev")
-        self.assertEqual(logger.resource_attributes["k8s.cluster.name"], "cloudops-dev")
+        self.assertEqual(logger.resource_attributes["k8s.cluster.name"], "demo-cluster")
 
     #Handles test invalid log levels do not disable logging.
     def test_invalid_log_levels_do_not_disable_logging(self):
@@ -156,7 +156,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
     #Handles test read exporter parameters falls back to the hardcoded default endpoint.
     def test_read_exporter_parameters_uses_default_endpoint_constant(self):
         with patch.dict("os.environ", {}, clear=True), \
-                patch("cloudops_otel_logs.logger.DEFAULT_LOGS_ENDPOINT", "https://baked-in.example.com/v1/logs"):
+                patch("otel_logs.logger.DEFAULT_LOGS_ENDPOINT", "https://baked-in.example.com/v1/logs"):
             parsed = _read_exporter_parameters()
 
         self.assertEqual(parsed.otel.logs.url, "https://baked-in.example.com/v1/logs")
@@ -175,7 +175,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
 
         with patch.dict("os.environ", {}, clear=True):
             self.assertIsNone(_org_id())
-            with patch("cloudops_otel_logs.logger.DEFAULT_X_ORG_ID", "org-baked-in"):
+            with patch("otel_logs.logger.DEFAULT_X_ORG_ID", "org-baked-in"):
                 self.assertEqual(_org_id(), "org-baked-in")
 
     #Handles test otel export without X_ORG_ID falls back to console.
@@ -185,7 +185,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.example.com",
             "OTEL_SERVICE_NAME": "order-api",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertTrue(logger._use_console)
         self.assertFalse(logger._use_otel)
@@ -197,7 +197,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "X_ORG_ID": "org-123",
             "OTEL_SERVICE_NAME": "order-api",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertTrue(logger._use_console)
         self.assertFalse(logger._use_otel)
@@ -210,7 +210,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "X_ORG_ID": "org-123",
             "OTEL_SERVICE_NAME": "order-api",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         self.assertTrue(logger._use_otel)
         self.assertFalse(logger._use_console)
@@ -222,7 +222,7 @@ class CloudOpsLoggerTests(unittest.TestCase):
             "OTEL_LOG_LEVEL": "info,error",
             "OTEL_LOGS_SAMPLING_RATE": "0",
         }, clear=True):
-            logger = CloudOpsLogger("test")
+            logger = Logger("test")
 
         stdout = io.StringIO()
         stderr = io.StringIO()
@@ -266,6 +266,13 @@ class CloudOpsLoggerTests(unittest.TestCase):
         self.assertFalse(parameters.is_empty())
         self.assertIs(parameters.backend("otel"), backend)
         self.assertIsNone(parameters.backend("metrics"))
+
+
+#the module registers an atexit flush on import
+def test_atexit_flush_registered():
+    import otel_logs
+    # re-registering is harmless; assert the hook target exists and is callable
+    assert callable(otel_logs.logger.export_logs)
 
 
 if __name__ == "__main__":

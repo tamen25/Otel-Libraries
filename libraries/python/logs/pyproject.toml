@@ -1,19 +1,16 @@
-#This file defines pyproject package settings for CloudOps.
+#This file defines pyproject package settings for the otel logs library.
 [build-system]
 requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cloudops-otel-logs"
+name = "otel-logs"
 version = "0.1.0"
-description = "CloudOps logging helper for Python services."
+description = "OpenTelemetry logging helper for Python services."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
-authors = [
-  { name = "CloudOps" }
-]
-keywords = ["cloudops", "opentelemetry", "logs"]
+keywords = ["opentelemetry", "logs"]
 dependencies = [
   "opentelemetry-api==1.41.0",
   "opentelemetry-sdk==1.41.0",
@@ -21,4 +18,4 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cloudops_otel_logs"]
+packages = ["src/otel_logs"]

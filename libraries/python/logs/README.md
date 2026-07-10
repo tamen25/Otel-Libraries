@@ -1,10 +1,10 @@
-<!-- This document explains readme for CloudOps. -->
-# cloudops-otel-logs
+<!-- This document explains the readme for the otel logs library. -->
+# otel-logs
 
-Python logging helper for CloudOps services.
+Python logging helper built on OpenTelemetry.
 
 ```python
-from cloudops_otel_logs import logger
+from otel_logs import logger
 
 logger.info("order created", {"order_id": order_id})
 logger.error(error)

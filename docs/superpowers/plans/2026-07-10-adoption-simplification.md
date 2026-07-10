@@ -258,11 +258,11 @@ test("register entry initialises the tracer as a side effect", () => {
 **Interfaces:**
 - Produces: dist `otel-logs`, wheel `otel_logs-0.1.0-py3-none-any.whl` (Task 10 depends on this filename); public API `from otel_logs import logger` + `logger.export_logs()` unchanged.
 
-- [ ] **Step 1:** `git mv libraries/python/logs/src/cloudops_otel_logs libraries/python/logs/src/otel_logs`
+- [x] **Step 1:** `git mv libraries/python/logs/src/cloudops_otel_logs libraries/python/logs/src/otel_logs`
 
-- [ ] **Step 2:** `pyproject.toml`: `name = "cloudops-otel-logs"` → `"otel-logs"`; update the hatch wheel packages entry `src/cloudops_otel_logs` → `src/otel_logs`; scrub description/keywords of "cloudops".
+- [x] **Step 2:** `pyproject.toml`: `name = "cloudops-otel-logs"` → `"otel-logs"`; update the hatch wheel packages entry `src/cloudops_otel_logs` → `src/otel_logs`; scrub description/keywords of "cloudops".
 
-- [ ] **Step 3:** In the package + tests, replace module references: `cloudops_otel_logs` → `otel_logs` everywhere (imports and `patch("cloudops_otel_logs.logger....")` targets). Rename class `CloudOpsLogger` → `Logger` (keep the module-level `logger` singleton name). Command:
+- [x] **Step 3:** In the package + tests, replace module references: `cloudops_otel_logs` → `otel_logs` everywhere (imports and `patch("cloudops_otel_logs.logger....")` targets). Rename class `CloudOpsLogger` → `Logger` (keep the module-level `logger` singleton name). Command:
 
 ```bash
 cd libraries/python/logs
@@ -270,7 +270,7 @@ grep -rl "cloudops_otel_logs\|CloudOpsLogger\|cloudops" src tests README.md | xa
 grep -ri cloudops src tests pyproject.toml README.md   # expect: no hits (fix any leftovers by hand)
 ```
 
-- [ ] **Step 4: atexit flush** — at the bottom of `logger.py`, right after the module-level singleton is created:
+- [x] **Step 4: atexit flush** — at the bottom of `logger.py`, right after the module-level singleton is created:
 
 ```python
 #flush batched logs at interpreter exit so shutdown does not lose telemetry
@@ -288,9 +288,9 @@ def test_atexit_flush_registered():
     assert callable(otel_logs.logger.export_logs)
 ```
 
-- [ ] **Step 5:** `cd libraries/python/logs && PYTHONPATH=src python -m pytest -q` — expect all pass (20 existing + new).
+- [x] **Step 5:** `cd libraries/python/logs && PYTHONPATH=src python -m pytest -q` — expect all pass (20 existing + new).
 
-- [ ] **Step 6: Commit**: `git add -A libraries/python/logs && git commit -m "feat(python-logs): rename to otel-logs, add atexit auto-flush"`.
+- [x] **Step 6: Commit**: `git add -A libraries/python/logs && git commit -m "feat(python-logs): rename to otel-logs, add atexit auto-flush"`.
 
 ---
 
