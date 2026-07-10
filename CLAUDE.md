@@ -1,69 +1,83 @@
-# OtelLibraries — CloudOps Telemetry Client Libraries (Python / Java / .NET)
+# OtelLibraries — Telemetry Client Libraries (Python / Java / .NET / Node.js)
 
-This project is a standalone extraction of the CloudOps OpenTelemetry (OTel)
-client libraries. It was copied from the larger `CloudOps` monorepo and trimmed
-to only the **Python**, **Java**, and **.NET** ports. The goal here is to
-continue developing these libraries in isolation.
+A standalone, self-contained set of OpenTelemetry (OTel) client libraries. Each
+language port wraps OpenTelemetry to give services a small, consistent logging
+and tracing API. Every port implements the **same logical design** and honours
+the **same `OTEL_*` environment-variable contract**, so behaviour stays identical
+across runtimes. This project is fully independent — there is no external
+organisation or monorepo it depends on.
 
 ## What this is
 
-A set of parallel client libraries that wrap OpenTelemetry to give services a
-small, consistent logging API. Every language port implements the **same
-logical design** and honours the **same `OTEL_*` environment-variable
-contract**, so behaviour stays identical across runtimes.
+Two signals are implemented, each a separate package so apps adopt only what
+they need:
 
-Currently only the **logs** signal is implemented (`libraries/<lang>/logs`).
-Metrics and traces are future signals; new signals follow the same shape:
-`libraries/<language>/<signal>/`.
+- **logs** — `libraries/<lang>/logs`
+- **traces** — `libraries/<lang>/traces`
+
+New signals (e.g. metrics) follow the same shape: `libraries/<language>/<signal>/`.
 
 ## Layout
 
 ```text
 libraries/
-  python/logs/     cloudops-otel-logs        (pyproject.toml, hatchling)
-  java/logs/       com.cloudops:otel-logs    (pom.xml, Maven)
-  dotnet/logs/     CloudOps.Otel.Logs        (.csproj, net8.0)
+  python/{logs,traces}/    otel-logs / otel-traces            (pyproject.toml, hatchling)
+  java/{logs,traces}/      otel:otel-logs / otel:otel-traces  (pom.xml, Maven)
+  dotnet/{logs,traces}/    Otel.Logs / Otel.Traces            (.csproj, net8.0)
+  nodejs/{logs,traces}/    @otel/logs / @otel/traces          (package.json, TypeScript)
   README.md
 ```
 
-Each library has: a `src/` (or package) tree, a `tests/` tree, its own
-`README.md`, and its build manifest.
+Each library has a `src/` (or package) tree, a `tests/` tree, its own `README.md`,
+and its build manifest. (`nodejs/metrics/` exists but is out of scope.)
 
 ## The shared design (keep ports in sync)
 
-All three ports mirror the same class/type structure. When you change behaviour
-in one language, apply the equivalent change to the others:
+All four ports mirror the same structure. When you change behaviour in one
+language, apply the equivalent change to the others.
 
-- `CloudOpsLogger` — public entry point. Methods: `info` / `error` / `debug` /
-  `warn`, plus `log(level, message, ...)`, `export_logs()` (flush).
-- `LogSampler` — per-invocation batching + probabilistic sampling. Batches are
-  keyed by invocation id; a batch is always emitted if it contains an `error`,
-  otherwise it is sampled at `OTEL_LOGS_SAMPLING_RATE`.
-- `LogEntry` / `LogBatch` — data carriers.
-- `LogsExporterConfig` / `BackendConfig` / `ExporterParameters` — exporter config,
-  resolved from env vars or an inline `OTEL_EXPORTER_PARAMETERS` JSON blob (no
-  secrets file). OTLP export needs both a resolved endpoint URL and `X_ORG_ID`,
-  else it falls back to console.
-- `RuntimeResourceAttributes` — derives OTel resource attributes and detects the
-  Azure runtime (Functions / Container Apps / App Service / AKS) from env vars.
-- `LogsConfiguration` (Java/.NET) — configuration surface.
+**Logs** — public entry point `Logger` (`Logger.init()` / `Logger.Init()`; in
+Python/Node a module-level `logger` singleton). Methods: `info` / `error` /
+`debug` / `warn`, plus `log(level, message, …)` and a flush (`export_logs()` /
+`exportLogs()` / `ExportLogs()`). Batched logs are **flushed automatically at
+process shutdown** (atexit / shutdown hook / `ProcessExit` / `beforeExit`+SIGTERM);
+the explicit flush is only needed in serverless. Internals: `LogSampler`
+(per-invocation batching + probabilistic sampling; a batch is always emitted if
+it contains an `error`, else sampled at `OTEL_LOGS_SAMPLING_RATE`), `LogEntry` /
+`LogBatch`, `LogsConfiguration` / `BackendConfig` / `ExporterParameters`,
+`RuntimeResourceAttributes` (Azure runtime detection).
 
-Exporters: `console` (default) and `otel` (OTLP/HTTP). The `otel` exporter is used
-only when both an endpoint URL and `X_ORG_ID` resolve (from env or the hardcoded
+**Traces** — public entry point `Tracer` / `init()`. Registers the W3C
+`tracecontext` propagator and HTTP auto-instrumentation so a request stays one
+connected trace across services. Per-language surface:
+
+- **Node.js**: `import "@otel/traces/register"` (side-effect init) — or the
+  `tracer` / `AzureService` exports for manual/Azure-service spans.
+- **Python**: no-arg `init()` — opportunistically instruments `requests` + Flask.
+- **.NET**: `builder.Services.AddOtelTraces()` (ASP.NET Core + HttpClient).
+- **Java**: `Tracer.init()` plus framework-free edge helpers `tracedClient()`
+  (CLIENT span + header injection) and `wrap(name, handler)` (SERVER span);
+  lower-level `startServerSpan` / `startClientSpan` / `injectHeaders` remain public.
+
+> **Init-before-framework rule:** tracing must be initialised before the app's
+> web framework loads (Node: require `register` first; Python: call `init()`
+> before importing Flask). HTTP auto-instrumentation must patch the HTTP layer
+> before the server is created.
+
+Exporters: `console` (default) and `otel` (OTLP/HTTP). The `otel` exporter is
+used only when **both** an endpoint URL and `X_ORG_ID` resolve (from env or the
 `DEFAULT_*` constants); otherwise — or if OTel deps are unavailable — ports fall
 back to console.
 
 ### `OTEL_*` env-var contract (identical across languages)
 
-- `OTEL_BACKEND_EXPORTERS` — list, e.g. `console`, `otel` (JSON array or CSV).
-- `OTEL_LOG_LEVEL` — enabled levels among `info,error,debug,warn`.
-- `OTEL_LOGS_SAMPLING_RATE` — 0–100 (default 100 = emit everything).
-- `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` / `OTEL_EXPORTER_OTLP_ENDPOINT` — endpoint
-  (the plain endpoint is normalised to end in `/v1/logs`).
-- `X_ORG_ID` — auth (sent as the `X-OrgId` header on every OTLP export; required
-  for `otel`, else console).
+- `OTEL_BACKEND_EXPORTERS` — `console` (default) or `otel` (JSON array or CSV). The explicit backend switch.
+- `OTEL_LOG_LEVEL` — enabled levels among `info,error,debug,warn` (logs).
+- `OTEL_LOGS_SAMPLING_RATE` — 0–100 (default 100) (logs).
+- `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` / `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` / `OTEL_EXPORTER_OTLP_ENDPOINT` — endpoint (normalised to `/v1/logs` or `/v1/traces`).
+- `X_ORG_ID` — **org identifier (not a secret)**, sent as the `X-OrgId` header on every OTLP export; required for `otel`, else console.
 - `OTEL_SERVICE_NAME` / `OTEL_RESOURCE_ATTRIBUTES` — resource identity.
-- `OTEL_EXPORTER_PARAMETERS` (inline JSON) — exporter config source (`otel.logs.url`).
+- `OTEL_EXPORTER_PARAMETERS` (inline JSON) — exporter config (`otel.logs.url` / `otel.trace.url`).
 
 Azure runtime auto-detection uses `FUNCTIONS_EXTENSION_VERSION`/`FUNCTIONS_WORKER_RUNTIME`,
 `WEBSITE_SITE_NAME`, `CONTAINER_APP_NAME`, `KUBERNETES_SERVICE_HOST`, `K8S_*`/`POD_*`, etc.
@@ -72,56 +86,43 @@ Azure runtime auto-detection uses `FUNCTIONS_EXTENSION_VERSION`/`FUNCTIONS_WORKE
 
 Run each library from its own directory.
 
-**Python** (`libraries/python/logs`, requires Python ≥ 3.11):
-```bash
-python -m venv .venv && . .venv/Scripts/activate   # Windows: .venv\Scripts\activate
-pip install -e ".[dev]" || pip install -e .
-pytest                     # rtk vitest-style: prefer `rtk pytest` if configured
-```
-
-**Java** (`libraries/java/logs`, Java 21, Maven):
-```bash
-mvn -q test                # unit tests + JaCoCo coverage
-mvn -q package             # build the jar
-```
-
-**.NET** (`libraries/dotnet/logs`, net8.0):
-```bash
-dotnet test                # tests + Cobertura coverage
-dotnet pack                # build the NuGet package
-```
+- **Python** (≥ 3.11): `PYTHONPATH=src python -m pytest -q`
+- **Java** (21, Maven): `mvn -q verify` (use the absolute `-f <pom>` path — the shell cwd can reset)
+- **.NET** (net8.0): `dotnet test tests/<Name>.Tests.csproj` (the test project is separate)
+- **Node.js** (≥ 22, TypeScript): `npm test` / `npm run test:coverage`
 
 ## Package identities
 
-| Lang   | Package                    | Manifest       | Runtime      |
-|--------|----------------------------|----------------|--------------|
-| Python | `cloudops-otel-logs`       | pyproject.toml | Python ≥3.11 |
-| Java   | `com.cloudops:otel-logs`   | pom.xml        | Java 21      |
-| .NET   | `CloudOps.Otel.Logs`       | .csproj        | net8.0       |
+| Lang    | Logs              | Traces              | Manifest       |
+|---------|-------------------|---------------------|----------------|
+| Python  | `otel-logs`       | `otel-traces`       | pyproject.toml |
+| Java    | `otel:otel-logs`  | `otel:otel-traces`  | pom.xml        |
+| .NET    | `Otel.Logs`       | `Otel.Traces`       | .csproj        |
+| Node.js | `@otel/logs`      | `@otel/traces`      | package.json   |
 
-OTel SDK versions in use: Python `1.41.0`, Java (`${otel.version}` in pom),
-.NET `1.15.3`.
+OTel SDK versions: Python `1.41.0`, Java `1.60.1`, .NET `1.15.3`, Node.js OTel JS
+2.x line (core/resources/sdk `2.9.0`, experimental `0.220.0`).
+
+## Demo
+
+`demo/` runs all four languages through **Grafana Alloy** (collector) into
+**Loki** (logs), **Tempo** (traces), and **Mimir** (service-graph metrics), with
+**Grafana** for correlated logs+traces and a service-graph flow chart. See
+`demo/README.md`.
 
 ## Conventions
 
-- **Keep the three ports behaviourally in sync** — same env-var handling, same
-  sampling logic, same runtime detection. A change to one usually needs the
-  same change in the other two; call it out if you intentionally diverge.
+- **Keep the four ports behaviourally in sync** — same env-var handling, sampling
+  logic, and runtime detection. A change to one usually needs the same change in
+  the others; call it out if you intentionally diverge.
 - Match the existing code style in each language (the Python source uses terse
   `#comment` headers above functions; mirror the file's local idiom).
 - Tests live beside the code under `tests/` (or `src/test`) — add/adjust tests
   with any behaviour change; each port has a coverage gate.
-- Don't commit build artifacts (`bin/`, `obj/`, `target/`, `dist/`,
-  `__pycache__/`, `*.pyc`, `TestResults/`) — see `.gitignore`.
+- Don't commit build artifacts (`bin/`, `obj/`, `target/`, `dist/`, `node_modules/`,
+  `__pycache__/`, `*.pyc`, `TestResults/`, `demo/artifacts/`) — see `.gitignore`.
 
 ## Git commit messages
 
 - Do **not** include `Co-Authored-By` lines or any AI/Claude/Anthropic
   attribution in commit messages.
-
-## Origin
-
-Extracted from the `CloudOps` monorepo's `libraries/` tree (which also has
-Node.js, Go, and C++ ports plus a full Terraform/infra stack). Publishing in the
-original repo went to Azure Artifacts via GitHub Actions; that pipeline was
-**not** copied here. This project is source-only for library development.

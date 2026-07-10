@@ -1,11 +1,9 @@
-<!-- This document explains readme for CloudOps. -->
 # .NET Libraries
 
-.NET CloudOps telemetry libraries.
+OpenTelemetry telemetry libraries for .NET:
 
-Published package names:
+- `Otel.Logs` (`dotnet/logs`)
+- `Otel.Traces` (`dotnet/traces`)
 
-- `CloudOps.Otel.Logs`
-
-Publishing is handled by `.github/workflows/libraries.yml`, which authenticates
-to Azure Artifacts and runs `scripts/publish-dotnet-packages.sh`.
+See [`../../docs/USING-THE-LIBRARIES.md`](../../docs/USING-THE-LIBRARIES.md) for
+install and usage.

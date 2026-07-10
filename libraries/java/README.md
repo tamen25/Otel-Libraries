@@ -1,11 +1,9 @@
-<!-- This document explains readme for CloudOps. -->
 # Java Libraries
 
-Java CloudOps telemetry libraries.
+OpenTelemetry telemetry libraries for Java:
 
-Published package names:
+- `otel:otel-logs` (`java/logs`)
+- `otel:otel-traces` (`java/traces`)
 
-- `com.cloudops:otel-logs`
-
-Publishing is handled by `.github/workflows/libraries.yml`, which authenticates
-to Azure Artifacts and runs `scripts/publish-java-packages.sh`.
+See [`../../docs/USING-THE-LIBRARIES.md`](../../docs/USING-THE-LIBRARIES.md) for
+install and usage.

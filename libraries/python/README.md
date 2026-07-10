@@ -1,11 +1,9 @@
-<!-- This document explains readme for CloudOps. -->
 # Python Libraries
 
-Python CloudOps telemetry libraries.
+OpenTelemetry telemetry libraries for Python:
 
-Published package names:
+- `otel-logs` (`python/logs`)
+- `otel-traces` (`python/traces`)
 
-- `cloudops-otel-logs`
-
-Publishing is handled by `.github/workflows/libraries.yml`, which authenticates
-to Azure Artifacts and runs `scripts/publish-python-packages.sh`.
+See [`../../docs/USING-THE-LIBRARIES.md`](../../docs/USING-THE-LIBRARIES.md) for
+install and usage.

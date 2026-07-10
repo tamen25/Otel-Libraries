@@ -1,97 +1,89 @@
-# OTel Logs Demo Stack
+# OTel Demo Stack
 
-Local **Grafana Alloy → Loki → Grafana** pipeline (plus a dormant **Tempo**
-traces backend) exercised by three chained sample apps that log via the CloudOps
-OTel logs libraries:
+A local end-to-end telemetry pipeline exercised by four chained sample apps, one
+per language, each using the `otel-logs` + `otel-traces` libraries:
 
 ```
-loadgen → python-app → java-app → dotnet-app
-              └──────────── OTLP/HTTP logs ────────────→ alloy → Loki → Grafana
+frontend (React) → node-edge → python-app → java-app → dotnet-app
+                        └──────── OTLP/HTTP logs + traces ────────→ Grafana Alloy
+                                        Alloy → Loki (logs)
+                                        Alloy → Tempo (traces) → Mimir (service-graph metrics)
+                                        Grafana ← Loki / Tempo / Mimir
 ```
 
-Each app logs through its own CloudOps OTel logs library (Python wheel, Java jar,
-.NET nupkg), all configured with `OTEL_BACKEND_EXPORTERS=otel` and pointed at
-Alloy. Alloy fans logs into Loki; Grafana visualizes them with
-auto-provisioned dashboards.
+Each app is configured with `OTEL_BACKEND_EXPORTERS=otel` and points at **Grafana
+Alloy** (the collector). Alloy fans logs into **Loki** and traces into **Tempo**;
+Tempo's metrics-generator remote-writes service-graph + span metrics into
+**Mimir**; **Grafana** visualizes everything with auto-provisioned dashboards and
+logs↔traces correlation.
 
 ## Prerequisites
 
 - Docker Desktop (running)
-- On the host, only to build the library artifacts: Python 3.11+ and the .NET SDK
-  (Java is built from source inside its image, so no host Java/Maven needed)
+- On the host, only to build library artifacts: Python 3.11+, the .NET SDK, and
+  Node 22+ (Java is built from source inside its image — no host Java/Maven needed)
 
 ## Run
 
 ```bash
-# 1. Build the Python wheel and .NET nupkg into demo/artifacts/
+# 1. Build the wheels, nupkgs, and npm tarballs into demo/artifacts/
 bash demo/scripts/build-libs.sh
 
 # 2. Build images and start everything
 docker compose -f demo/docker-compose.yml up -d --build
 ```
 
-`build-libs.sh` MUST run before `up --build` — the Python and .NET Dockerfiles
-install the artifacts from `demo/artifacts/`.
+`build-libs.sh` MUST run before `up --build` — the app Dockerfiles install the
+artifacts from `demo/artifacts/`.
 
-Open **Grafana at http://localhost:3000** (anonymous admin is enabled — no login).
-Dashboards live in the **OTel Demo** folder:
-
-- **All Apps — Logs Overview** — log volume by service, volume by level, an error
-  stat, and a live combined log stream with a `service` filter.
-- **Per-App Drilldown** — pick an app from the `service` dropdown to see its
-  level breakdown, all logs, and errors-only.
+- **React demo UI:** http://localhost:5173 — click "Send a traced order", see the
+  trace id and links into Grafana.
+- **Grafana:** http://localhost:3000 (anonymous admin — no login). Dashboards in
+  the **OTel Demo** folder: **Traces & Logs Correlation**, **Service Graph** (the
+  `user → node-edge → python → java → dotnet` flow chart), and the logs dashboards.
 
 ## Verify from the command line
 
 ```bash
-# All three services are present in Loki:
+# All four services present in Loki:
 curl -s "http://localhost:3100/loki/api/v1/label/service_name/values"
-# -> {"status":"success","data":["dotnet-app","java-app","python-app"]}
+# -> {"status":"success","data":["dotnet-app","java-app","node-edge","python-app"]}
 
-# Log counts per service (last 2 minutes):
-for svc in python-app java-app dotnet-app; do
-  curl -s -G "http://localhost:3100/loki/api/v1/query" \
-    --data-urlencode "query=sum(count_over_time({service_name=\"$svc\"}[2m]))" \
-    | python -c "import sys,json;r=json.load(sys.stdin)['data']['result'];print('$svc', r[0]['value'][1] if r else 0)"
-done
+# Drive one traced order and confirm a single trace spans all services:
+curl -s http://localhost:8090/api/order    # -> {"traceId":"...","chain":[...]}
+
+# Service-graph edges in Mimir:
+curl -s "http://localhost:9009/prometheus/api/v1/query?query=traces_service_graph_request_total"
 
 # Grafana health:
 curl -s http://localhost:3000/api/health   # -> {"database":"ok",...}
 ```
 
+Tempo's API (`:3200`) is not published to the host — query it from inside the
+network, e.g. `docker compose -f demo/docker-compose.yml exec python-app python3 -c "..."`.
+
 ## How logs are labeled
 
-To keep Loki cardinality bounded, only **`service_name`** is an indexed stream
-label. The log **level** arrives as OTLP severity; Loki derives a
-**`detected_level`** value (info/warn/error/debug) into *structured metadata*.
-
-- Aggregate by level: `sum by (detected_level) (count_over_time({service_name="python-app"}[1m]))`
-- Filter by level: `{service_name="python-app"} | detected_level=` + `` `error` ``
-  (level is structured metadata, so it goes after `|`, not inside `{}`).
-
-Everything else (message, `order_id`, invocation id) is in the log body / metadata.
+To keep Loki cardinality bounded, **`service_name`** is the indexed stream label
+(Alloy promotes `service.name` to it). The log **level** arrives as OTLP severity;
+Loki derives `detected_level` into structured metadata. A log emitted inside an
+active span carries its `trace_id` (also a stream label), which powers the
+Loki↔Tempo correlation.
 
 ## Stop
 
 ```bash
-docker compose -f demo/docker-compose.yml down          # stop
-docker compose -f demo/docker-compose.yml down -v       # stop + wipe data
+docker compose -f demo/docker-compose.yml down      # stop
+docker compose -f demo/docker-compose.yml down -v   # stop + wipe data
 ```
-
-## Tracing (future)
-
-Tempo and Alloy's traces pipeline are already running but idle — apps
-emit no spans yet. Adding app-side spans later needs **no infra change**: Alloy
-already accepts OTLP traces and exports them to Tempo, and the Loki
-datasource is pre-wired with a derived `TraceID` field that links log lines to
-Tempo once traces carry a `trace_id`.
 
 ## Notes / troubleshooting
 
-- **Cold start:** on the very first seconds, `python-app` may log an `error`
-  ("java call failed / connection refused") before `java-app` is listening. This
-  is expected — loadgen retries and the chain self-heals. It also seeds the
-  error-level dashboards with real data.
+- **Volume-mounted configs** (alloy / tempo / grafana / mimir) are NOT reloaded by
+  `up -d` — run `docker compose -f demo/docker-compose.yml restart <svc>` after
+  editing them.
+- **Cold start:** in the first seconds an upstream app may log a connection error
+  before its downstream is listening. This is expected — loadgen retries.
 - **Rebuild after changing a library:** re-run `bash demo/scripts/build-libs.sh`
   then `docker compose -f demo/docker-compose.yml up -d --build`.
 - **Inspect what Alloy receives:** `docker compose -f demo/docker-compose.yml logs alloy`

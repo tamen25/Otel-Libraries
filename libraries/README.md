@@ -1,32 +1,19 @@
-<!-- This document explains readme for CloudOps. -->
-# CloudOps Client Libraries
+# Client Libraries
 
-Internal client libraries live here before they are published to Azure
-Artifacts.
-
-Current scope:
-
-- `nodejs/logs`
-- `nodejs/metrics`
-- `nodejs/traces`
-- `java/logs`
-- `dotnet/logs`
-- `python/logs`
-- `go/logs`
-- `cpp/logs`
-
-Future language roots should follow the same shape:
+OpenTelemetry client libraries, one directory per language and signal:
 
 ```text
 libraries/<language>/<signal>/
 ```
 
-The library pipeline publishes npm, Maven, NuGet, and Python packages to
-language-specific Azure Artifacts feeds. Go and C++ packages are
-validated in CI while their artifact publishing path is finalized. All ports
-honor the same `OTEL_*` env-var contract documented in each library's README.
-Use the `publish_languages` workflow input, or the `LIBRARY_PUBLISH_LANGUAGES`
-GitHub Actions variable, to publish only selected languages.
+Current scope:
 
-The pipeline runs unit tests with coverage gates for every implemented logs
-library before any selected publish job can run.
+- `python/logs`, `python/traces`
+- `java/logs`, `java/traces`
+- `dotnet/logs`, `dotnet/traces`
+- `nodejs/logs`, `nodejs/traces`
+
+All ports honor the same `OTEL_*` env-var contract documented in each library's
+README, and each has a unit-test suite with a coverage gate. See
+[`../docs/USING-THE-LIBRARIES.md`](../docs/USING-THE-LIBRARIES.md) for how to
+install and use them in an application.

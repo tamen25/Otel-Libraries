@@ -1,13 +1,9 @@
-<!-- This document explains readme for CloudOps. -->
 # Node.js Libraries
 
-Node.js/TypeScript CloudOps telemetry libraries.
+OpenTelemetry telemetry libraries for Node.js / TypeScript:
 
-Published npm names:
+- `@otel/logs` (`nodejs/logs`)
+- `@otel/traces` (`nodejs/traces`)
 
-- `@cloudops/otel-logs`
-- `@cloudops/otel-metrics`
-- `@cloudops/otel-traces`
-
-Publishing is handled by `.github/workflows/libraries.yml`, which authenticates
-to AWS CodeArtifact and runs `scripts/publish-node-packages.sh`.
+See [`../../docs/USING-THE-LIBRARIES.md`](../../docs/USING-THE-LIBRARIES.md) for
+install and usage.

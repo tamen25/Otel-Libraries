@@ -43,7 +43,7 @@ export default function App() {
     <div style={styles.page}>
       <div style={styles.container}>
         <header style={styles.header}>
-          <h1 style={styles.h1}>CloudOps · Distributed Tracing</h1>
+          <h1 style={styles.h1}>OTel · Distributed Tracing</h1>
           <p style={styles.sub}>
             One request fans out across five hops. Each hop propagates W3C trace context automatically,
             so it becomes a single trace in Tempo — with correlated logs in Loki.
