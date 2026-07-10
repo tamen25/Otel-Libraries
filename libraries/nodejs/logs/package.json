@@ -1,0 +1,40 @@
+{
+  "name": "@cloudops/otel-logs",
+  "version": "0.1.0",
+  "description": "CloudOps OpenTelemetry logs helper for Node.js.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test",
+    "test:coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=\"dist/**/*.js\" --test-coverage-exclude=\"dist/index.js\" --test-coverage-lines=68 --test-coverage-branches=60 --test-coverage-functions=75"
+  },
+  "keywords": [
+    "cloudops",
+    "opentelemetry",
+    "logs"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.52.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.52.0",
+    "@opentelemetry/instrumentation": "^0.52.0",
+    "@opentelemetry/instrumentation-winston": "^0.39.0",
+    "@opentelemetry/resources": "^1.25.0",
+    "@opentelemetry/sdk-logs": "^0.52.0",
+    "@opentelemetry/semantic-conventions": "^1.25.0",
+    "@opentelemetry/winston-transport": "^0.9.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
