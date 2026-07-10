@@ -1,7 +1,9 @@
 // .NET tail service: logs and finalizes the order.
 using CloudOps.Otel.Logs;
+using CloudOps.Otel.Traces;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCloudOpsTracing();
 var app = builder.Build();
 var log = CloudOpsLogger.InitializeLogger();
 

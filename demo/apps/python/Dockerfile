@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 WORKDIR /app
-# Install the locally-built CloudOps logs wheel first (from build context).
+# Install the locally-built CloudOps logs + traces wheels first (from build context).
 COPY artifacts/cloudops_otel_logs-0.1.0-py3-none-any.whl /tmp/
-RUN pip install --no-cache-dir /tmp/cloudops_otel_logs-0.1.0-py3-none-any.whl
+COPY artifacts/cloudops_otel_traces-0.1.0-py3-none-any.whl /tmp/
+RUN pip install --no-cache-dir /tmp/cloudops_otel_logs-0.1.0-py3-none-any.whl /tmp/cloudops_otel_traces-0.1.0-py3-none-any.whl
 COPY apps/python/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY apps/python/app.py .

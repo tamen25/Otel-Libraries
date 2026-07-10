@@ -6,6 +6,8 @@ WORKDIR /build
 # and with tests skipped JaCoCo would otherwise fail the coverage check at 0%.
 COPY libraries/java/logs /libs/logs
 RUN mvn -q -f /libs/logs/pom.xml install -DskipTests -Djacoco.skip=true
+COPY libraries/java/traces /libs/traces
+RUN mvn -q -f /libs/traces/pom.xml install -DskipTests
 # Build the demo app.
 COPY demo/apps/java/pom.xml .
 COPY demo/apps/java/src ./src

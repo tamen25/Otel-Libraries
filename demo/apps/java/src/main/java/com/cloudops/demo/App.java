@@ -2,7 +2,10 @@
 package com.cloudops.demo;
 
 import com.cloudops.otel.logs.CloudOpsLogger;
+import com.cloudops.otel.traces.CloudOpsTracer;
 import com.sun.net.httpserver.HttpServer;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -10,9 +13,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class App {
   private static final CloudOpsLogger LOG = CloudOpsLogger.initializeLogger();
+  private static final CloudOpsTracer TRACER = CloudOpsTracer.initializeTracer();
   private static final String DOTNET_URL =
       System.getenv().getOrDefault("DOTNET_URL", "http://dotnet-app:8081/finalize");
   private static final HttpClient CLIENT = HttpClient.newHttpClient();
@@ -29,24 +35,41 @@ public final class App {
   }
 
   private static void process(com.sun.net.httpserver.HttpExchange ex) throws IOException {
-    String query = ex.getRequestURI().getQuery();
-    String orderId = query != null && query.startsWith("order_id=") ? query.substring(9) : "unknown";
-    LOG.debug("validating order", "order_id", orderId, "hop", "java");
-    LOG.info("processing order", "order_id", orderId, "hop", "java");
-    if (COUNT.incrementAndGet() % 5 == 0) {
-      LOG.warn("downstream latency high (simulated)", "order_id", orderId, "count", COUNT.get());
-    }
-    try {
-      HttpRequest req = HttpRequest.newBuilder()
-          .uri(URI.create(DOTNET_URL + "?order_id=" + orderId)).GET().build();
-      HttpResponse<String> resp = CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
-      LOG.info("dotnet responded", "order_id", orderId, "status", resp.statusCode());
-      respond(ex, 200, "processed");
-    } catch (Exception e) {
-      LOG.error("dotnet call failed", "order_id", orderId, "error", e.getMessage());
-      respond(ex, 502, "downstream error");
+    // Continue the caller's trace from the incoming request headers (W3C tracecontext).
+    Map<String, String> incoming = new HashMap<>();
+    ex.getRequestHeaders().forEach((key, values) -> {
+      if (values != null && !values.isEmpty()) {
+        incoming.put(key.toLowerCase(), values.get(0));
+      }
+    });
+    Span span = TRACER.startServerSpan("process", incoming);
+
+    try (Scope scope = span.makeCurrent()) {
+      String query = ex.getRequestURI().getQuery();
+      String orderId = query != null && query.startsWith("order_id=") ? query.substring(9) : "unknown";
+      LOG.debug("validating order", "order_id", orderId, "hop", "java");
+      LOG.info("processing order", "order_id", orderId, "hop", "java");
+      if (COUNT.incrementAndGet() % 5 == 0) {
+        LOG.warn("downstream latency high (simulated)", "order_id", orderId, "count", COUNT.get());
+      }
+      try {
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+            .uri(URI.create(DOTNET_URL + "?order_id=" + orderId)).GET();
+        // Inject the current trace context so the downstream .NET service stays on the same trace.
+        TRACER.injectHeaders().forEach(builder::header);
+        HttpResponse<String> resp = CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        LOG.info("dotnet responded", "order_id", orderId, "status", resp.statusCode());
+        respond(ex, 200, "processed");
+      } catch (Exception e) {
+        span.recordException(e);
+        LOG.error("dotnet call failed", "order_id", orderId, "error", e.getMessage());
+        respond(ex, 502, "downstream error");
+      } finally {
+        LOG.exportLogs();
+      }
     } finally {
-      LOG.exportLogs();
+      span.end();
+      TRACER.exportSpans();
     }
   }
 

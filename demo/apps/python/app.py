@@ -6,8 +6,10 @@ import requests
 from flask import Flask, jsonify
 
 from cloudops_otel_logs import logger
+from cloudops_otel_traces import init_tracing
 
 app = Flask(__name__)
+init_tracing(app)
 JAVA_URL = os.getenv("JAVA_URL", "http://java-app:8080/process")
 _order_count = 0
 
