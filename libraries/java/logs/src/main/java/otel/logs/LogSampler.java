@@ -1,5 +1,5 @@
 // This file contains log sampler logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -8,9 +8,9 @@ import java.util.Map;
 final class LogSampler {
   private final Map<String, LogBatch> batchMap = new LinkedHashMap<>();
   private final double probabilisticSamplingRate = LogsConfiguration.samplingRate();
-  private final CloudOpsLogger logger;
+  private final Logger logger;
 
-  LogSampler(CloudOpsLogger logger) {
+  LogSampler(Logger logger) {
     this.logger = logger;
   }
 

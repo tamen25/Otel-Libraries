@@ -1,5 +1,5 @@
 // This file contains exporter parameters logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 import java.util.Objects;
 

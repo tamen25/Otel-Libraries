@@ -1,5 +1,5 @@
 // This file contains cloud ops logger test logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,11 +11,11 @@ import java.util.EnumSet;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-class CloudOpsLoggerTest {
+class LoggerTest {
   @Test
   void parseLogLevelsIgnoresUnknownValues() {
-    assertEquals(EnumSet.of(LogLevel.ERROR), CloudOpsLogger.parseLogLevels("bad,error"));
-    assertEquals(EnumSet.allOf(LogLevel.class), CloudOpsLogger.parseLogLevels("bad"));
+    assertEquals(EnumSet.of(LogLevel.ERROR), Logger.parseLogLevels("bad,error"));
+    assertEquals(EnumSet.allOf(LogLevel.class), Logger.parseLogLevels("bad"));
   }
 
   @Test
@@ -25,7 +25,7 @@ class CloudOpsLoggerTest {
     System.setOut(new PrintStream(output, true, StandardCharsets.UTF_8));
 
     try {
-      CloudOpsLogger logger = new CloudOpsLogger();
+      Logger logger = new Logger();
       logger.info("created order", Map.of("order_id", 42));
       logger.exportLogs();
     } finally {

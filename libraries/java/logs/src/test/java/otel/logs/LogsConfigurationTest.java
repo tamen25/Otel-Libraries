@@ -1,5 +1,5 @@
 // This file contains logs configuration test logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;

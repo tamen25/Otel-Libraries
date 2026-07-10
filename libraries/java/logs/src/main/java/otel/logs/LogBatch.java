@@ -1,5 +1,5 @@
 // This file contains log batch logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 import java.util.ArrayList;
 import java.util.List;

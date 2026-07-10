@@ -1,11 +1,10 @@
-// This file contains cloud ops logger logic for OTel logs.
-package com.cloudops.otel.logs;
+// This file contains logger logic for the otel logs library.
+package otel.logs;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.baggage.Baggage;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
-import io.opentelemetry.api.logs.Logger;
 import io.opentelemetry.api.logs.Severity;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
@@ -26,43 +25,39 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public final class CloudOpsLogger {
+public final class Logger {
   private static final String[] DEFAULT_EXPORTERS = {"console"};
-  private static volatile CloudOpsLogger instance;
+  private static volatile Logger instance;
 
   private final Set<LogLevel> enabledLevels;
   private final Map<String, String> resourceAttributes;
   private final String[] exportersList;
   private final LogSampler sampler;
   private SdkLoggerProvider loggerProvider;
-  private Logger otelLogger;
+  private io.opentelemetry.api.logs.Logger otelLogger;
   private boolean useConsole;
   private boolean useOtel;
   private String previousTraceId;
   private String uniqueId;
 
-  CloudOpsLogger() {
+  Logger() {
     this.resourceAttributes = RuntimeResourceAttributes.create();
     this.enabledLevels = parseLogLevels(System.getenv("OTEL_LOG_LEVEL"));
     this.exportersList = LogsConfiguration.parseStringArray(System.getenv("OTEL_BACKEND_EXPORTERS"), DEFAULT_EXPORTERS);
     this.sampler = new LogSampler(this);
-    init();
+    configure();
   }
 
-  // Initializes logger.
-  public static CloudOpsLogger initialiseLogger() {
-    return initializeLogger();
-  }
-
-  // Initializes logger.
-  public static CloudOpsLogger initializeLogger() {
-    CloudOpsLogger localInstance = instance;
+  // Initializes logger and registers a best-effort flush at process shutdown.
+  public static Logger init() {
+    Logger localInstance = instance;
     if (localInstance == null) {
-      synchronized (CloudOpsLogger.class) {
+      synchronized (Logger.class) {
         localInstance = instance;
         if (localInstance == null) {
-          localInstance = new CloudOpsLogger();
+          localInstance = new Logger();
           instance = localInstance;
+          Runtime.getRuntime().addShutdownHook(new Thread(instance::exportLogs));
         }
       }
     }
@@ -135,8 +130,8 @@ public final class CloudOpsLogger {
     }
   }
 
-  // Initializes the requested work.
-  private void init() {
+  // Configures exporters for this instance.
+  private void configure() {
     if (exportersList.length <= 1 && containsExporter("console")) {
       useConsole = true;
       return;

@@ -1,5 +1,5 @@
 // This file contains runtime resource attributes logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

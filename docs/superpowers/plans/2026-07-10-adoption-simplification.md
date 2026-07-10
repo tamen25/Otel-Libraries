@@ -360,7 +360,7 @@ def test_init_no_arg_never_throws(monkeypatch):
 **Interfaces:**
 - Produces: Maven artifact `otel:otel-logs:0.1.0`, class `otel.logs.Logger` with static `Logger init()` (rename of `initialiseLogger()`), instance methods `info/warn/error/debug/exportLogs` unchanged.
 
-- [ ] **Step 1: Mechanical rename** (Git Bash, from repo root):
+- [x] **Step 1: Mechanical rename** (Git Bash, from repo root):
 
 ```bash
 cd libraries/java/logs
@@ -375,15 +375,15 @@ grep -ri cloudops src pom.xml README.md   # fix every remaining hit (README text
 
 (If the test class file name contains `CloudOpsLogger`, `git mv` it too.)
 
-- [ ] **Step 2: Shutdown-hook flush** — inside `Logger.init()`, after the singleton is constructed (guard so it registers once):
+- [x] **Step 2: Shutdown-hook flush** — inside `Logger.init()`, after the singleton is constructed (guard so it registers once):
 
 ```java
     Runtime.getRuntime().addShutdownHook(new Thread(instance::exportLogs));
 ```
 
-- [ ] **Step 3:** `mvn -q -f "C:/Users/user/Desktop/OtelLibraries/libraries/java/logs/pom.xml" verify` — expect BUILD SUCCESS, 9+ tests, JaCoCo gate green.
+- [x] **Step 3:** `mvn -q -f "C:/Users/user/Desktop/OtelLibraries/libraries/java/logs/pom.xml" verify` — expect BUILD SUCCESS, 9+ tests, JaCoCo gate green.
 
-- [ ] **Step 4: Commit**: `git add -A libraries/java/logs && git commit -m "feat(java-logs): rename to otel:otel-logs with Logger.init(), add shutdown-hook flush"`.
+- [x] **Step 4: Commit**: `git add -A libraries/java/logs && git commit -m "feat(java-logs): rename to otel:otel-logs with Logger.init(), add shutdown-hook flush"`.
 
 ---
 

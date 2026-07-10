@@ -1,5 +1,5 @@
 // This file contains log entry logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 final class LogEntry {
   final String invocationId;

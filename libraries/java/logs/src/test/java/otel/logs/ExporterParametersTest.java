@@ -1,5 +1,5 @@
 // This file contains exporter parameters test logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;

@@ -1,5 +1,5 @@
 // This file contains log level logic for OTel logs.
-package com.cloudops.otel.logs;
+package otel.logs;
 
 public enum LogLevel {
   INFO,

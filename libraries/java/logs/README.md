@@ -1,12 +1,12 @@
-<!-- This document explains readme for CloudOps. -->
-# com.cloudops:otel-logs
+<!-- This document explains the readme for the otel logs library. -->
+# otel:otel-logs
 
-Java logging helper for CloudOps services.
+Java logging helper built on OpenTelemetry.
 
 ```java
-import com.cloudops.otel.logs.CloudOpsLogger;
+import otel.logs.Logger;
 
-final CloudOpsLogger logger = CloudOpsLogger.initialiseLogger();
+final Logger logger = Logger.init();
 
 logger.info("order created", orderId);
 logger.error(exception);
