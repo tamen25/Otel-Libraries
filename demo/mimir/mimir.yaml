@@ -1,0 +1,60 @@
+# Grafana Mimir — single-process (monolithic) config for the demo.
+# Replaces Prometheus as the metrics store that Tempo remote-writes its
+# service-graph + span metrics into, and that Grafana queries for the
+# service-graph flow chart. NOT a production config.
+multitenancy_enabled: false
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+  log_level: warn
+
+# Everything on local disk; single replica.
+common:
+  storage:
+    backend: filesystem
+    filesystem:
+      dir: /data/mimir
+
+blocks_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/mimir/blocks
+  bucket_store:
+    sync_dir: /data/mimir/tsdb-sync
+  tsdb:
+    dir: /data/mimir/tsdb
+
+compactor:
+  data_dir: /data/mimir/compactor
+  sharding_ring:
+    kvstore:
+      store: memberlist
+
+distributor:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: memberlist
+
+ingester:
+  ring:
+    instance_addr: 127.0.0.1
+    replication_factor: 1
+    kvstore:
+      store: memberlist
+
+ruler_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/mimir/rules
+
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
+
+# Tempo's metrics-generator back-dates samples slightly; accept out-of-order
+# and older-than-default samples so nothing gets dropped in the demo.
+limits:
+  out_of_order_time_window: 1h
+  creation_grace_period: 1h

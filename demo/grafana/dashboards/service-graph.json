@@ -21,13 +21,13 @@
     {
       "title": "Request rate by service (span metrics)",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "mimir" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "options": { "legend": { "displayMode": "table", "placement": "right" } },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
           "expr": "sum by (service) (rate(traces_spanmetrics_calls_total[1m]))",
           "legendFormat": "{{service}}"
         }
@@ -36,13 +36,13 @@
     {
       "title": "Edge request rate (caller → callee)",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "mimir" },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "options": { "legend": { "displayMode": "table", "placement": "right" } },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "mimir" },
           "expr": "sum by (client, server) (rate(traces_service_graph_request_total[1m]))",
           "legendFormat": "{{client}} → {{server}}"
         }
