@@ -7,14 +7,37 @@ datasources:
     url: http://loki:3100
     isDefault: true
     jsonData:
-      # Link log lines to traces once tracing is added later.
+      # Link a log line to its trace: the OTLP trace context lands on the
+      # `trace_id` Loki label, so match on the label and open it in Tempo.
       derivedFields:
         - name: TraceID
-          matcherRegex: '"trace_id":"(\w+)"'
+          matcherType: label
+          matcherRegex: trace_id
           url: '$${__value.raw}'
           datasourceUid: tempo
+          urlDisplayLabel: 'View trace'
+
   - name: Tempo
     type: tempo
     uid: tempo
     access: proxy
     url: http://tempo:3200
+    jsonData:
+      # Link a span back to its logs in Loki, filtered by the shared trace id.
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: true
+        filterBySpanID: false
+        tags:
+          - key: 'service.name'
+            value: 'service_name'
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
