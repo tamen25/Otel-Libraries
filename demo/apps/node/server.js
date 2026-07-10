@@ -1,9 +1,9 @@
 // Node.js edge service: the entry point of the demo trace chain.
-// Requiring the traces package FIRST registers HTTP auto-instrumentation, so the
-// inbound request and the outbound call to python are traced and W3C context
-// propagates automatically — no manual span code.
-require("@cloudops/otel-traces");
-const { logger } = require("@cloudops/otel-logs");
+// Requiring the traces register entry FIRST registers HTTP auto-instrumentation,
+// so the inbound request and the outbound call to python are traced and W3C
+// context propagates automatically — no manual span code.
+require("@otel/traces/register");
+const { logger } = require("@otel/logs");
 const { trace } = require("@opentelemetry/api");
 const http = require("http");
 

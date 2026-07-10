@@ -1,4 +1,4 @@
-# Build stage: restore from a local NuGet source containing the CloudOps nupkg.
+# Build stage: restore from a local NuGet source containing the Otel nupkgs.
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 # The local NuGet source is the mounted artifacts folder.

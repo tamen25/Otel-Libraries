@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CloudOps.Otel.Logs" Version="0.1.0" />
-    <PackageReference Include="CloudOps.Otel.Traces" Version="0.1.0" />
+    <PackageReference Include="Otel.Logs" Version="0.1.0" />
+    <PackageReference Include="Otel.Traces" Version="0.1.0" />
   </ItemGroup>
 </Project>

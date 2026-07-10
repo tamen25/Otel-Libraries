@@ -2,14 +2,18 @@
 import os
 import uuid
 
-import requests
-from flask import Flask, jsonify
+from otel_logs import logger
+from otel_traces import init
 
-from cloudops_otel_logs import logger
-from cloudops_otel_traces import init_tracing
+# Instrument first: init() patches Flask + requests. Flask must be imported
+# AFTER this call so the app object is the instrumented subclass — the same
+# "initialise before your framework loads" rule the Node edge follows.
+init()
+
+import requests  # noqa: E402
+from flask import Flask, jsonify  # noqa: E402
 
 app = Flask(__name__)
-init_tracing(app)
 JAVA_URL = os.getenv("JAVA_URL", "http://java-app:8080/process")
 _order_count = 0
 

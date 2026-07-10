@@ -1,7 +1,7 @@
-# Build stage: install the local CloudOps logs library from source, then build the app.
+# Build stage: install the local logs library from source, then build the app.
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
-# Copy and install the CloudOps logs library into the local Maven repo.
+# Copy and install the logs library into the local Maven repo.
 # Skip tests AND the JaCoCo coverage gate: we only need the installed jar+POM,
 # and with tests skipped JaCoCo would otherwise fail the coverage check at 0%.
 COPY libraries/java/logs /libs/logs

@@ -2,7 +2,7 @@
   "name": "node-edge",
   "version": "1.0.0",
   "private": true,
-  "description": "Node.js edge service for the CloudOps OTel demo — entry point of the trace chain.",
+  "description": "Node.js edge service for the OTel demo — entry point of the trace chain.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
