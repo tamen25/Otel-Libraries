@@ -1,16 +1,16 @@
 // This file contains cloud ops logger tests logic for logs tests.
 using Xunit;
 
-namespace CloudOps.Otel.Logs.Tests;
+namespace Otel.Logs.Tests;
 
-public sealed class CloudOpsLoggerTests
+public sealed class LoggerTests
 {
     [Fact]
     // Parses log levels ignores unknown values.
     public void ParseLogLevelsIgnoresUnknownValues()
     {
-        Assert.True(CloudOpsLogger.ParseLogLevels("bad,error").SetEquals([LogLevel.Error]));
-        Assert.True(CloudOpsLogger.ParseLogLevels("bad").SetEquals(Enum.GetValues<LogLevel>()));
+        Assert.True(Logger.ParseLogLevels("bad,error").SetEquals([LogLevel.Error]));
+        Assert.True(Logger.ParseLogLevels("bad").SetEquals(Enum.GetValues<LogLevel>()));
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public sealed class CloudOpsLoggerTests
 
         try
         {
-            var logger = new CloudOpsLogger();
+            var logger = new Logger();
             logger.Info("created order", new { order_id = 42 });
             logger.Debug("debug should be disabled");
             logger.ExportLogs();
@@ -63,7 +63,7 @@ public sealed class CloudOpsLoggerTests
 
         try
         {
-            var logger = new CloudOpsLogger();
+            var logger = new Logger();
             logger.Info("gated to console");
             logger.ExportLogs();
         }
@@ -93,7 +93,7 @@ public sealed class CloudOpsLoggerTests
 
         try
         {
-            var logger = new CloudOpsLogger();
+            var logger = new Logger();
             logger.Info("should go to otel");
         }
         finally

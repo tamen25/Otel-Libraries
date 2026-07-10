@@ -6,12 +6,18 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
-namespace CloudOps.Otel.Logs;
+namespace Otel.Logs;
 
-public sealed class CloudOpsLogger
+public sealed class Logger
 {
     private static readonly IReadOnlyList<string> DefaultExporters = ["console"];
-    private static readonly Lazy<CloudOpsLogger> Instance = new(() => new CloudOpsLogger());
+    private static readonly Lazy<Logger> Instance = new(() =>
+    {
+        var logger = new Logger();
+        // Flush batched logs at process shutdown so telemetry is not lost.
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => logger.ExportLogs();
+        return logger;
+    });
     private readonly HashSet<LogLevel> enabledLevels;
     private readonly IReadOnlyList<string> exportersList;
     private readonly LogSampler sampler;
@@ -23,25 +29,19 @@ public sealed class CloudOpsLogger
     private string? uniqueId;
 
     // Handles cloud ops logger.
-    internal CloudOpsLogger()
+    internal Logger()
     {
         ResourceAttributes = RuntimeResourceAttributes.Create();
         enabledLevels = ParseLogLevels(Environment.GetEnvironmentVariable("OTEL_LOG_LEVEL"));
         exportersList = LogsConfiguration.ParseStringArray(Environment.GetEnvironmentVariable("OTEL_BACKEND_EXPORTERS"), DefaultExporters);
         sampler = new LogSampler(this);
-        Init();
+        Configure();
     }
 
     public IReadOnlyDictionary<string, string> ResourceAttributes { get; }
 
-    // Initializes logger.
-    public static CloudOpsLogger InitialiseLogger()
-    {
-        return Instance.Value;
-    }
-
-    // Initializes logger.
-    public static CloudOpsLogger InitializeLogger()
+    // Initializes the logger and returns the process-wide singleton.
+    public static Logger Init()
     {
         return Instance.Value;
     }
@@ -123,7 +123,7 @@ public sealed class CloudOpsLogger
     }
 
     // Initializes the requested work.
-    private void Init()
+    private void Configure()
     {
         if (exportersList.Count <= 1 && exportersList.Contains("console", StringComparer.OrdinalIgnoreCase))
         {

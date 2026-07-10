@@ -1,15 +1,15 @@
 // This file contains log sampler logic for logs src.
-namespace CloudOps.Otel.Logs;
+namespace Otel.Logs;
 
 internal sealed class LogSampler
 {
     private readonly Dictionary<string, LogBatch> batchMap = new(StringComparer.Ordinal);
     private readonly double probabilisticSamplingRate = LogsConfiguration.SamplingRate();
-    private readonly CloudOpsLogger logger;
+    private readonly Logger logger;
     private readonly object syncRoot = new();
 
     // Logs sampler.
-    public LogSampler(CloudOpsLogger logger)
+    public LogSampler(Logger logger)
     {
         this.logger = logger;
     }

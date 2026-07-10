@@ -1,5 +1,5 @@
 // This file contains log level logic for logs src.
-namespace CloudOps.Otel.Logs;
+namespace Otel.Logs;
 
 public enum LogLevel
 {

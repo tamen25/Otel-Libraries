@@ -1,4 +1,4 @@
-<!-- This project file configures logs tests for CloudOps. -->
+<!-- This project file configures the logs library tests. -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -21,6 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CloudOps.Otel.Logs.csproj" />
+    <ProjectReference Include="..\Otel.Logs.csproj" />
   </ItemGroup>
 </Project>

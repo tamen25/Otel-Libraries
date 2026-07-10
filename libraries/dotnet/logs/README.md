@@ -1,16 +1,15 @@
-<!-- This document explains readme for CloudOps. -->
-# CloudOps.Otel.Logs
+# Otel.Logs
 
-.NET logging helper for CloudOps services.
+.NET logging helper for services.
 
 ```csharp
-using CloudOps.Otel.Logs;
+using Otel.Logs;
 
-var logger = CloudOpsLogger.InitialiseLogger();
+var logger = Logger.Init();
 
 logger.Info("order created", orderId);
 logger.Error(exception);
-logger.ExportLogs();
+logger.ExportLogs();   // optional: batched logs also flush at process exit
 ```
 
 Set `OTEL_SERVICE_NAME` in every app. The library also merges
@@ -24,7 +23,7 @@ Configuration matches the Node.js logs library:
 - `OTEL_LOGS_SAMPLING_RATE`: percentage from `0` to `100`. Error logs are always exported.
 - `OTEL_EXPORTER_PARAMETERS`: inline JSON object with `otel.logs.url`.
 - `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT`: OTLP HTTP endpoint.
-- `X_ORG_ID`: authentication key, sent on every OTLP export as the `X-OrgId` header.
+- `X_ORG_ID`: org identifier, sent on every OTLP export as the `X-OrgId` header (required for OTLP).
 
 The OTLP exporter is used only when **both** an endpoint URL and `X_ORG_ID` resolve;
 otherwise the library falls back to console. Provide them via the environment

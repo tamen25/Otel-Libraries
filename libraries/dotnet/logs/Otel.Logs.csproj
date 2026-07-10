@@ -1,14 +1,12 @@
-<!-- This project file configures dotnet logs for CloudOps. -->
+<!-- This project file configures the dotnet logs library. -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>CloudOps.Otel.Logs</PackageId>
+    <PackageId>Otel.Logs</PackageId>
     <Version>0.1.0</Version>
-    <Authors>CloudOps</Authors>
-    <Description>CloudOps logging helper for .NET services.</Description>
-    <RepositoryUrl>https://github.com/cloudops/cloudops</RepositoryUrl>
+    <Description>OpenTelemetry logging helper for .NET services.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

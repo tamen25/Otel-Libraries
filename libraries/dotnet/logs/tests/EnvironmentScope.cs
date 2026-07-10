@@ -1,5 +1,5 @@
 // This file contains environment scope logic for logs tests.
-namespace CloudOps.Otel.Logs.Tests;
+namespace Otel.Logs.Tests;
 
 internal sealed class EnvironmentScope : IDisposable
 {

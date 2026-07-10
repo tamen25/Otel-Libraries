@@ -1,7 +1,7 @@
 // This file contains exporter parameters logic for logs src.
 using System.Text.Json.Serialization;
 
-namespace CloudOps.Otel.Logs;
+namespace Otel.Logs;
 
 public sealed class ExporterParameters
 {

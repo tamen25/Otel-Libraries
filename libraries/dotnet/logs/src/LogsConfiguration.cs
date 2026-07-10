@@ -1,7 +1,7 @@
 // This file contains logs configuration logic for logs src.
 using System.Text.Json;
 
-namespace CloudOps.Otel.Logs;
+namespace Otel.Logs;
 
 internal static class LogsConfiguration
 {

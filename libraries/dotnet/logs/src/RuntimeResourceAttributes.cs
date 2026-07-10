@@ -1,5 +1,5 @@
 // This file contains runtime resource attributes logic for logs src.
-namespace CloudOps.Otel.Logs;
+namespace Otel.Logs;
 
 public static class RuntimeResourceAttributes
 {

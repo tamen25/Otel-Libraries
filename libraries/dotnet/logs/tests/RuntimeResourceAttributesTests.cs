@@ -1,7 +1,7 @@
 // This file contains runtime resource attributes tests logic for logs tests.
 using Xunit;
 
-namespace CloudOps.Otel.Logs.Tests;
+namespace Otel.Logs.Tests;
 
 public sealed class RuntimeResourceAttributesTests
 {
@@ -113,7 +113,7 @@ public sealed class RuntimeResourceAttributesTests
         {
             ["OTEL_SERVICE_NAME"] = "order-api",
             ["KUBERNETES_SERVICE_HOST"] = "10.0.0.1",
-            ["AKS_CLUSTER_NAME"] = "cloudops-dev",
+            ["AKS_CLUSTER_NAME"] = "otel-dev",
             ["K8S_POD_NAME"] = "order-api-abc"
         });
 
@@ -121,7 +121,7 @@ public sealed class RuntimeResourceAttributesTests
 
         Assert.Equal("azure", attributes["cloud.provider"]);
         Assert.Equal("azure_aks", attributes["cloud.platform"]);
-        Assert.Equal("cloudops-dev", attributes["k8s.cluster.name"]);
+        Assert.Equal("otel-dev", attributes["k8s.cluster.name"]);
         Assert.Equal("order-api-abc", attributes["k8s.pod.name"]);
     }
 }

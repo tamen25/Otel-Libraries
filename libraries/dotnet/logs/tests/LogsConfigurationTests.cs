@@ -1,7 +1,7 @@
 // This file contains logs configuration tests logic for logs tests.
 using Xunit;
 
-namespace CloudOps.Otel.Logs.Tests;
+namespace Otel.Logs.Tests;
 
 public sealed class LogsConfigurationTests
 {

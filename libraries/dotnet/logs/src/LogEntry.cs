@@ -1,5 +1,5 @@
 // This file contains log entry logic for logs src.
-namespace CloudOps.Otel.Logs;
+namespace Otel.Logs;
 
 // Logs entry.
 internal sealed record LogEntry(
