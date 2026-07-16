@@ -26,9 +26,12 @@ cd libraries/nodejs/logs && npm test                                    # Node >
 
 ## Using the libraries in an app
 
-See [`docs/USING-THE-LIBRARIES.md`](./docs/USING-THE-LIBRARIES.md) for install
-and one-liner setup per language. For the shared design, the full `OTEL_*`
-contract, and cross-language conventions, see [`CLAUDE.md`](./CLAUDE.md).
+Start with **[`GETTING-STARTED.md`](./GETTING-STARTED.md)** — how to use the
+libraries plus the full `OTEL_*` environment-variable configuration. For deeper
+per-language detail see [`docs/USING-THE-LIBRARIES.md`](./docs/USING-THE-LIBRARIES.md)
+and each [`libraries/<lang>/USAGE.md`](./libraries/); prerequisites to install are
+in each `libraries/<lang>/REQUIREMENTS.md`. For the shared design and
+cross-language conventions, see [`CLAUDE.md`](./CLAUDE.md).
 
 A runnable end-to-end demo (all four languages → Grafana Alloy → Loki/Tempo/Mimir
 → Grafana, with correlated logs+traces and a service-graph flow chart) lives in
