@@ -136,10 +136,12 @@ Find values through Azure Portal and the Databricks workspace:
 |---|---|
 | `<DATABRICKS_WORKSPACE_HOSTNAME>` | **Azure Databricks → workspace → Overview → Workspace URL**, without `https://` |
 | `<DATABRICKS_SQL_WAREHOUSE_HTTP_PATH>` | **Launch Workspace → SQL → SQL Warehouses → warehouse → Connection details → HTTP path** |
-| `<DATABRICKS_CLIENT_ID>` | **Microsoft Entra ID → App registrations → application → Application (client) ID** |
-| `<DATABRICKS_CLIENT_SECRET>` | **App registration → Certificates & secrets → Client secrets** |
+| `<DATABRICKS_CLIENT_ID>` | **Databricks workspace → Settings → Identity and access → Service principals → application/client ID** |
+| `<DATABRICKS_CLIENT_SECRET>` | **Databricks service principal → Secrets → Generate secret** |
 
 Databricks also requires Unity Catalog, System Tables, a running SQL Warehouse and OAuth2 M2M access.
+
+Full process: [Databricks metrics collection](services/azure-monitor/DATABRICKS.md).
 
 ## Add Kubernetes metrics
 

@@ -1,6 +1,7 @@
 // Azure Databricks System Tables -> Alloy Databricks exporter -> LGTM metrics.
 // Microsoft.Databricks/workspaces has no Azure Monitor platform-metric namespace.
 // Requires Unity Catalog, System Tables, a SQL Warehouse and OAuth2 M2M values.
+// Setup and validation: DATABRICKS.md
 
 prometheus.exporter.databricks "azure_databricks" {
   server_hostname     = "<DATABRICKS_WORKSPACE_HOSTNAME>"

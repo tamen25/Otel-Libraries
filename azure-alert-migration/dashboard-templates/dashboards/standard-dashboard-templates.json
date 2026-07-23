@@ -1,0 +1,1240 @@
+{
+  "uid": "standard-dashboard-templates",
+  "title": "Standard Dashboard Templates",
+  "description": "Reusable standard dashboard template for Alloy, Azure Monitor and LGTM.",
+  "tags": [
+    "standard-template",
+    "alloy",
+    "lgtm",
+    "overview"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "15s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "15s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "metrics_datasource",
+        "label": "Metrics data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "prometheus"
+        }
+      },
+      {
+        "name": "logs_datasource",
+        "label": "Logs data source",
+        "type": "datasource",
+        "query": "loki",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Loki",
+          "value": "loki"
+        }
+      },
+      {
+        "name": "traces_datasource",
+        "label": "Traces data source",
+        "type": "datasource",
+        "query": "tempo",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Tempo",
+          "value": "tempo"
+        }
+      },
+      {
+        "name": "cmdb_reference",
+        "label": "CMDB_REFERENCE",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$metrics_datasource"
+        },
+        "definition": "label_values({__name__=~\"(?:azure_.+|databricks_.+|container_.+|kube_.+)\"}, cmdbReference)",
+        "query": {
+          "query": "label_values({__name__=~\"(?:azure_.+|databricks_.+|container_.+|kube_.+)\"}, cmdbReference)",
+          "refId": "cmdb_referenceVariable"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      },
+      {
+        "name": "service_name",
+        "label": "Service name",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$metrics_datasource"
+        },
+        "definition": "label_values({__name__=~\"(?:azure_.+|databricks_.+|container_.+|kube_.+)\",cmdbReference=~\"$cmdb_reference\"}, service_name)",
+        "query": {
+          "query": "label_values({__name__=~\"(?:azure_.+|databricks_.+|container_.+|kube_.+)\",cmdbReference=~\"$cmdb_reference\"}, service_name)",
+          "refId": "service_nameVariable"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "#0078D4",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "Standard Dashboard Templates",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 18,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# Standard Dashboard Templates  \n**Azure services \u00b7 AKS \u00b7 Alloy \u00b7 LGTM**  \nReusable operational views. Panels query production metric names emitted by Alloy exporters."
+      },
+      "transparent": true,
+      "id": 1
+    },
+    {
+      "type": "text",
+      "title": "Template navigation",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 20
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Open dashboard\n- [Virtual Machines](/d/azure-virtual-machines)\n- [SQL Database](/d/azure-sql-database)\n- [SQL Managed Instance](/d/azure-sql-managed-instance)\n- [Service Bus](/d/azure-service-bus)\n- [Event Hubs](/d/azure-event-hubs)\n- [Event Grid](/d/azure-event-grid)\n- [Logic Apps Consumption](/d/azure-logic-apps)\n- [Logic Apps Standard](/d/azure-logic-apps-standard)\n- [Azure Cache for Redis](/d/azure-redis-cache)\n- [Cosmos DB](/d/azure-cosmos-db)\n- [Azure Databricks](/d/azure-databricks)\n- [Storage Accounts](/d/azure-storage-accounts)\n- [Azure Files](/d/azure-storage-files)\n- [Blob Storage](/d/azure-storage-blobs)\n- [AKS / Kubernetes](/d/azure-kubernetes)\n- [Kubernetes and Platform Logs](/d/kubernetes-platform-logs)"
+      },
+      "transparent": true,
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Included templates",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "vector(16)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0078D4",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Services reporting",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 3,
+        "y": 4,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "scalar(count({__name__=~\"azure_microsoft_compute_virtualmachines_percentage_cpu_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_sql_managedinstances_avg_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_servicebus_namespaces_activemessages_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_eventhub_namespaces_incomingmessages_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_eventgrid_topics_publishsuccesscount_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_logic_workflows_runsstarted_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_web_sites_cputime_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_cache_redis_alloperationspersecond_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_documentdb_databaseaccounts_normalizedruconsumption_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count(databricks_exporter_up{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_storage_storageaccounts_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_storage_storageaccounts_fileservices_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count({__name__=~\"azure_microsoft_storage_storageaccounts_blobservices_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0) + scalar(count(container_memory_usage_bytes{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) > bool 0)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0078D4",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Resources reporting",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_compute_virtualmachines_percentage_cpu_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_sql_managedinstances_avg_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_servicebus_namespaces_activemessages_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_eventhub_namespaces_incomingmessages_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_eventgrid_topics_publishsuccesscount_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_logic_workflows_runsstarted_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_web_sites_cputime_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_cache_redis_alloperationspersecond_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_documentdb_databaseaccounts_normalizedruconsumption_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(databricks_exporter_up{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"})) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_storage_storageaccounts_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_storage_storageaccounts_fileservices_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (resource_name) ({__name__=~\"azure_microsoft_storage_storageaccounts_blobservices_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))) + scalar(count(count by (k8s_namespace_name) (container_memory_usage_bytes{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"})))",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0078D4",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "Azure targets up",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 4,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum(up{job=~\"integrations/azure/.*\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}) or vector(0)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#D13438",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 99
+              },
+              {
+                "color": "#107C10",
+                "value": 99.9
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "Metric points sent/sec",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum(rate(otelcol_exporter_sent_metric_points_total[5m])) or vector(0)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0078D4",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 7
+    },
+    {
+      "type": "stat",
+      "title": "Metric send failures/sec",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 15,
+        "y": 4,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m])) or vector(0)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#107C10",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 1
+              },
+              {
+                "color": "#D13438",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 8
+    },
+    {
+      "type": "bargauge",
+      "title": "Resources reporting by template",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 18,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_compute_virtualmachines_percentage_cpu_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Virtual Machines",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "SQL Database",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_sql_managedinstances_avg_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "SQL Managed Instance",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_servicebus_namespaces_activemessages_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Service Bus",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_eventhub_namespaces_incomingmessages_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Event Hubs",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "F",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_eventgrid_topics_publishsuccesscount_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Event Grid",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "G",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_logic_workflows_runsstarted_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Logic Apps Consumption",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "H",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_web_sites_cputime_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Logic Apps Standard",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "I",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_cache_redis_alloperationspersecond_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Azure Cache for Redis",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "J",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_documentdb_databaseaccounts_normalizedruconsumption_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Cosmos DB",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "K",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(databricks_exporter_up{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"})",
+          "legendFormat": "Azure Databricks",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "L",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_storage_storageaccounts_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Storage Accounts",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "M",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_storage_storageaccounts_fileservices_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Azure Files",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "N",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (resource_name) ({__name__=~\"azure_microsoft_storage_storageaccounts_blobservices_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "Blob Storage",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        },
+        {
+          "refId": "O",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "count(count by (k8s_namespace_name) (container_memory_usage_bytes{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}))",
+          "legendFormat": "AKS / Kubernetes",
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0078D4",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 14,
+        "minVizWidth": 8,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true
+      },
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "Alloy Azure scrape target health",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "up{job=~\"integrations/azure/.*\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}",
+          "legendFormat": "{{job}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bool",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "Alloy metric pipeline throughput",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum(rate(otelcol_receiver_accepted_metric_points_total[5m]))",
+          "legendFormat": "accepted points/sec",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "AKS container CPU by namespace",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum by (k8s_namespace_name) (container_cpu_usage{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"})",
+          "legendFormat": "{{k8s_namespace_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cores",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "AKS container memory by namespace",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum by (k8s_namespace_name) (container_memory_usage_bytes{cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"})",
+          "legendFormat": "{{k8s_namespace_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 13
+    },
+    {
+      "type": "timeseries",
+      "title": "Related log volume",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "sum by (job) (count_over_time({cmdbReference=~\"$cmdb_reference\"}[$__auto]))",
+          "legendFormat": "{{job}}",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 45,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 14
+    },
+    {
+      "type": "timeseries",
+      "title": "Related trace rate by application service",
+      "description": "Application traces received through Alloy and correlated by CMDB_REFERENCE.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "$traces_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 36,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "$traces_datasource"
+          },
+          "queryType": "traceql",
+          "query": "{resource.cmdbReference=~\"$cmdb_reference\"} | rate() by (resource.service.name)",
+          "legendFormat": "{{service.name}}",
+          "limit": 20
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 15
+    },
+    {
+      "type": "logs",
+      "title": "Recent related logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 12,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "{cmdbReference=~\"$cmdb_reference\"}",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "id": 16
+    },
+    {
+      "type": "table",
+      "title": "Recent related application traces",
+      "description": "Recent application traces received through Alloy and correlated by CMDB_REFERENCE.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "$traces_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 44,
+        "w": 12,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "$traces_datasource"
+          },
+          "queryType": "traceql",
+          "query": "{resource.cmdbReference=~\"$cmdb_reference\"}",
+          "limit": 20
+        }
+      ],
+      "id": 17
+    }
+  ]
+}

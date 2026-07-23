@@ -1,0 +1,650 @@
+{
+  "uid": "kubernetes-platform-logs",
+  "title": "Standard | Kubernetes and Platform Logs",
+  "description": "Reusable standard dashboard template for Alloy, Azure Monitor and LGTM.",
+  "tags": [
+    "standard-template",
+    "alloy",
+    "lgtm",
+    "kubernetes",
+    "logs"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "15s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "15s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "metrics_datasource",
+        "label": "Metrics data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "prometheus"
+        }
+      },
+      {
+        "name": "logs_datasource",
+        "label": "Logs data source",
+        "type": "datasource",
+        "query": "loki",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Loki",
+          "value": "loki"
+        }
+      },
+      {
+        "name": "traces_datasource",
+        "label": "Traces data source",
+        "type": "datasource",
+        "query": "tempo",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Tempo",
+          "value": "tempo"
+        }
+      },
+      {
+        "name": "cmdb_reference",
+        "label": "CMDB_REFERENCE",
+        "type": "query",
+        "datasource": {
+          "type": "loki",
+          "uid": "$logs_datasource"
+        },
+        "definition": "label_values({job=~\".+\"}, cmdbReference)",
+        "query": {
+          "query": "label_values({job=~\".+\"}, cmdbReference)",
+          "refId": "cmdb_referenceVariable"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      },
+      {
+        "name": "service_name",
+        "label": "Service name",
+        "type": "query",
+        "datasource": {
+          "type": "loki",
+          "uid": "$logs_datasource"
+        },
+        "definition": "label_values({job=~\".+\",cmdbReference=~\"$cmdb_reference\"}, job)",
+        "query": {
+          "query": "label_values({job=~\".+\",cmdbReference=~\"$cmdb_reference\"}, job)",
+          "refId": "service_nameVariable"
+        },
+        "includeAll": true,
+        "allValue": ".+",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "#0078D4",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "Kubernetes and Platform Logs",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# Kubernetes & Platform Logs  \nStandard Loki template for pod, node, cluster-event and AKS control-plane logs."
+      },
+      "transparent": true,
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Collector log records accepted/sec",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum(rate(otelcol_receiver_accepted_log_records_total[5m])) or vector(0)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0078D4",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Collector log records refused/sec",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum(rate(otelcol_receiver_refused_log_records_total[5m])) or vector(0)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#107C10",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 1
+              },
+              {
+                "color": "#D13438",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Collector log export failures/sec",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 8,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum(rate(otelcol_exporter_send_failed_log_records_total[5m])) or vector(0)",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#107C10",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 1
+              },
+              {
+                "color": "#D13438",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 4
+    },
+    {
+      "type": "timeseries",
+      "title": "Log volume by service",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 14,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "sum by (job) (count_over_time({job=~\"$service_name\",cmdbReference=~\"$cmdb_reference\"}[$__auto]))",
+          "legendFormat": "{{job}}",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 45,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 5
+    },
+    {
+      "type": "timeseries",
+      "title": "Errors and failures",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 7,
+        "w": 10,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "sum(count_over_time({job=~\"$service_name\",cmdbReference=~\"$cmdb_reference\"} |~ \"(?i)(error|failed|critical)\" [$__auto]))",
+          "legendFormat": "errors",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 45,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 6
+    },
+    {
+      "type": "logs",
+      "title": "All selected logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 14,
+        "h": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "{job=~\"$service_name\",cmdbReference=~\"$cmdb_reference\"}",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "id": 7
+    },
+    {
+      "type": "logs",
+      "title": "Errors, failures and critical events",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 15,
+        "w": 10,
+        "h": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "{job=~\"$service_name\",cmdbReference=~\"$cmdb_reference\"} |~ \"(?i)(error|failed|critical)\"",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "Related trace rate by application service",
+      "description": "Application traces received through Alloy and correlated by CMDB_REFERENCE.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "$traces_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "$traces_datasource"
+          },
+          "queryType": "traceql",
+          "query": "{resource.cmdbReference=~\"$cmdb_reference\"} | rate() by (resource.service.name)",
+          "legendFormat": "{{service.name}}",
+          "limit": 20
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9
+    },
+    {
+      "type": "table",
+      "title": "Related application traces",
+      "description": "Recent application traces received through Alloy and correlated by CMDB_REFERENCE.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "$traces_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "$traces_datasource"
+          },
+          "queryType": "traceql",
+          "query": "{resource.cmdbReference=~\"$cmdb_reference\"}",
+          "limit": 20
+        }
+      ],
+      "id": 10
+    }
+  ]
+}

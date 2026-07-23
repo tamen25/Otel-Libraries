@@ -1,0 +1,1258 @@
+{
+  "uid": "azure-sql-database",
+  "title": "Standard | Azure | SQL Database",
+  "description": "Reusable standard dashboard template for Alloy, Azure Monitor and LGTM.",
+  "tags": [
+    "standard-template",
+    "alloy",
+    "lgtm",
+    "azure",
+    "sql_database"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "15s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "15s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "metrics_datasource",
+        "label": "Metrics data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "prometheus"
+        }
+      },
+      {
+        "name": "logs_datasource",
+        "label": "Logs data source",
+        "type": "datasource",
+        "query": "loki",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Loki",
+          "value": "loki"
+        }
+      },
+      {
+        "name": "traces_datasource",
+        "label": "Traces data source",
+        "type": "datasource",
+        "query": "tempo",
+        "regex": "",
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "Tempo",
+          "value": "tempo"
+        }
+      },
+      {
+        "name": "cmdb_reference",
+        "label": "CMDB_REFERENCE",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$metrics_datasource"
+        },
+        "definition": "label_values({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\"}, cmdbReference)",
+        "query": {
+          "query": "label_values({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\"}, cmdbReference)",
+          "refId": "cmdb_referenceVariable"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      },
+      {
+        "name": "service_name",
+        "label": "Service name",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$metrics_datasource"
+        },
+        "definition": "label_values({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\"}, service_name)",
+        "query": {
+          "query": "label_values({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\"}, service_name)",
+          "refId": "service_nameVariable"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      },
+      {
+        "name": "resource",
+        "label": "Azure resource",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$metrics_datasource"
+        },
+        "definition": "label_values({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}, resource_name)",
+        "query": {
+          "query": "label_values({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\"}, resource_name)",
+          "refId": "resourceVariable"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "refresh": 2,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 1
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "#0078D4",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "SQL Database",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# SQL Database  \n**Azure resource type:** `Microsoft.Sql/servers/databases`  \nStandard template for metrics collected by Grafana Alloy and stored in Mimir."
+      },
+      "transparent": true,
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "CPU",
+      "description": "Current value from `azure_microsoft_sql_servers_databases_cpu_percent_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#107C10",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 70
+              },
+              {
+                "color": "#D13438",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "DTU utilization",
+      "description": "Current value from `azure_microsoft_sql_servers_databases_dtu_consumption_percent_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg({__name__=~\"azure_microsoft_sql_servers_databases_dtu_consumption_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#107C10",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 70
+              },
+              {
+                "color": "#D13438",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Storage used",
+      "description": "Current value from `azure_microsoft_sql_servers_databases_storage_percent_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg({__name__=~\"azure_microsoft_sql_servers_databases_storage_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#0078D4",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Deadlocks",
+      "description": "Current value from `azure_microsoft_sql_servers_databases_deadlock_total_count`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum({__name__=~\"azure_microsoft_sql_servers_databases_deadlock_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#107C10",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 1
+              },
+              {
+                "color": "#D13438",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "Failed connections",
+      "description": "Current value from `azure_microsoft_sql_servers_databases_connection_failed_total_count`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum({__name__=~\"azure_microsoft_sql_servers_databases_connection_failed_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#107C10",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 1
+              },
+              {
+                "color": "#D13438",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "Database availability",
+      "description": "Current value from `azure_microsoft_sql_servers_databases_availability_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg({__name__=~\"azure_microsoft_sql_servers_databases_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "background_solid"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#D13438",
+                "value": null
+              },
+              {
+                "color": "#FFB900",
+                "value": 99
+              },
+              {
+                "color": "#107C10",
+                "value": 99.9
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU",
+      "description": "Alloy metric: `azure_microsoft_sql_servers_databases_cpu_percent_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "{{resource_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "DTU utilization",
+      "description": "Alloy metric: `azure_microsoft_sql_servers_databases_dtu_consumption_percent_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 7,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_dtu_consumption_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "{{resource_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "Storage used",
+      "description": "Alloy metric: `azure_microsoft_sql_servers_databases_storage_percent_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 7,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_storage_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "{{resource_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "Deadlocks",
+      "description": "Alloy metric: `azure_microsoft_sql_servers_databases_deadlock_total_count`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_deadlock_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "{{resource_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Failed connections",
+      "description": "Alloy metric: `azure_microsoft_sql_servers_databases_connection_failed_total_count`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 15,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "sum by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_connection_failed_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "{{resource_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Database availability",
+      "description": "Alloy metric: `azure_microsoft_sql_servers_databases_availability_average_percent`.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 15,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg by (resource_name) ({__name__=~\"azure_microsoft_sql_servers_databases_availability_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "{{resource_name}}",
+          "instant": false,
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 13
+    },
+    {
+      "type": "table",
+      "title": "Azure resource inventory",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$metrics_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$metrics_datasource"
+          },
+          "expr": "avg by (cmdbReference, service_name, resource_name, resource_group, resource_type, region) ({__name__=~\"azure_microsoft_sql_servers_databases_cpu_percent_.+\",cmdbReference=~\"$cmdb_reference\",service_name=~\"$service_name\",resource_name=~\"$resource\"})",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "azure_service": true,
+              "cloud_provider": true,
+              "cloud_region": true,
+              "data_mode": true,
+              "deployment_environment_name": true,
+              "environment": true,
+              "job": true,
+              "subscription_id": true
+            },
+            "renameByName": {
+              "Value": "CPU",
+              "cmdbReference": "CMDB_REFERENCE",
+              "resource_group": "Resource group",
+              "resource_name": "Resource",
+              "resource_type": "Azure resource type",
+              "region": "Region",
+              "service_name": "Service name"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Resource"
+          }
+        ]
+      },
+      "id": 14
+    },
+    {
+      "type": "timeseries",
+      "title": "Related log volume",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "sum by (job) (count_over_time({cmdbReference=~\"$cmdb_reference\"}[$__auto]))",
+          "legendFormat": "{{job}}",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 45,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 15
+    },
+    {
+      "type": "timeseries",
+      "title": "Related trace rate by application service",
+      "description": "Application traces received through Alloy and correlated by CMDB_REFERENCE.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "$traces_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "$traces_datasource"
+          },
+          "queryType": "traceql",
+          "query": "{resource.cmdbReference=~\"$cmdb_reference\"} | rate() by (resource.service.name)",
+          "legendFormat": "{{service.name}}",
+          "limit": 20
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 16
+    },
+    {
+      "type": "logs",
+      "title": "Related logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs_datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs_datasource"
+          },
+          "expr": "{cmdbReference=~\"$cmdb_reference\"}",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "id": 17
+    },
+    {
+      "type": "table",
+      "title": "Related application traces",
+      "description": "Recent application traces received through Alloy and correlated by CMDB_REFERENCE.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "$traces_datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "$traces_datasource"
+          },
+          "queryType": "traceql",
+          "query": "{resource.cmdbReference=~\"$cmdb_reference\"}",
+          "limit": 20
+        }
+      ],
+      "id": 18
+    }
+  ]
+}
