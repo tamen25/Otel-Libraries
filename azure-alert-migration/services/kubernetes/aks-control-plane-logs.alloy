@@ -1,0 +1,33 @@
+// AKS control-plane resource logs received through Azure Event Hubs.
+// First route the required AKS diagnostic categories to this Event Hub.
+
+loki.source.azure_event_hubs "aks_control_plane_logs" {
+  fully_qualified_namespace = "<AKS_EVENT_HUB_FULLY_QUALIFIED_NAMESPACE>"
+  event_hubs               = ["<AKS_EVENT_HUB_NAME>"]
+  forward_to               = [loki.relabel.aks_control_plane_logs.receiver]
+
+  authentication {
+    mechanism = "oauth"
+  }
+}
+
+loki.relabel "aks_control_plane_logs" {
+  forward_to = [loki.write.loki.receiver]
+
+  rule {
+    action       = "replace"
+    target_label = "job"
+    replacement  = "integrations/kubernetes/aks-control-plane"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "source"
+    replacement  = "aks-control-plane"
+  }
+
+  rule {
+    source_labels = ["__azure_event_hubs_category"]
+    target_label  = "category"
+  }
+}

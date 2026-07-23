@@ -1,0 +1,36 @@
+// Azure Cache for Redis -> Azure Monitor -> LGTM metrics.
+// Paste this entire file at the bottom of aks_alloy.alloy.
+
+prometheus.exporter.azure "azure_redis_cache" {
+  subscriptions    = ["<AZURE_SUBSCRIPTION_ID>"]
+  resource_type    = "Microsoft.Cache/redis"
+  metric_namespace = "Microsoft.Cache/redis"
+  metrics = [
+    "allcachehits",
+    "allcachemisses",
+    "allcacheRead",
+    "allcacheWrite",
+    "allconnectedclients",
+    "allevictedkeys",
+    "allexpiredkeys",
+    "allgetcommands",
+    "alloperationsPerSecond",
+    "allpercentprocessortime",
+    "allserverLoad",
+    "allsetcommands",
+    "alltotalcommandsprocessed",
+    "allusedmemory",
+    "allusedmemorypercentage",
+  ]
+  included_dimensions = [
+    "ShardId",
+    "Port",
+    "Primary",
+  ]
+}
+
+prometheus.scrape "azure_redis_cache" {
+  job_name   = "integrations/azure/redis_cache"
+  targets    = prometheus.exporter.azure.azure_redis_cache.targets
+  forward_to = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

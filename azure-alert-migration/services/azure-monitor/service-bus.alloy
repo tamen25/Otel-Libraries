@@ -1,0 +1,38 @@
+// Azure Service Bus -> Azure Monitor -> LGTM metrics.
+// Paste this entire file at the bottom of aks_alloy.alloy.
+
+prometheus.exporter.azure "azure_service_bus" {
+  subscriptions    = ["<AZURE_SUBSCRIPTION_ID>"]
+  resource_type    = "Microsoft.ServiceBus/Namespaces"
+  metric_namespace = "Microsoft.ServiceBus/Namespaces"
+  metrics = [
+    "AbandonMessage",
+    "ActiveConnections",
+    "ActiveMessages",
+    "CompleteMessage",
+    "DeadletteredMessages",
+    "IncomingBytes",
+    "IncomingMessages",
+    "IncomingRequests",
+    "Messages",
+    "NamespaceCpuUsage",
+    "NamespaceMemoryUsage",
+    "OutgoingBytes",
+    "OutgoingMessages",
+    "ServerErrors",
+    "ServerSendLatency",
+    "SuccessfulRequests",
+    "ThrottledRequests",
+    "UserErrors",
+  ]
+  included_dimensions = [
+    "EntityName",
+    "OperationResult",
+  ]
+}
+
+prometheus.scrape "azure_service_bus" {
+  job_name   = "integrations/azure/service_bus"
+  targets    = prometheus.exporter.azure.azure_service_bus.targets
+  forward_to = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

@@ -1,0 +1,31 @@
+// Host systemd journal logs.
+// Requires Alloy as a DaemonSet with /var/log/journal and /run/log/journal
+// mounted read-only at the same paths inside the Alloy container.
+
+loki.relabel "node_journal" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__hostname"]
+    target_label  = "node"
+  }
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+
+  rule {
+    source_labels = ["__journal_priority_keyword"]
+    target_label  = "level"
+  }
+}
+
+loki.source.journal "node_journal" {
+  max_age       = "24h"
+  labels        = {
+    source = "kubernetes-node-journal",
+  }
+  relabel_rules = loki.relabel.node_journal.rules
+  forward_to    = [loki.write.loki.receiver]
+}

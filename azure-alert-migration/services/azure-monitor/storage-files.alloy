@@ -1,0 +1,36 @@
+// Azure Files metrics -> Azure Monitor -> LGTM metrics.
+// Paste this entire file at the bottom of aks_alloy.alloy.
+
+prometheus.exporter.azure "azure_storage_files" {
+  subscriptions    = ["<AZURE_SUBSCRIPTION_ID>"]
+  resource_type    = "Microsoft.Storage/storageAccounts"
+  metric_namespace = "Microsoft.Storage/storageAccounts/fileServices"
+  metrics = [
+    "Availability",
+    "Egress",
+    "FileCapacity",
+    "FileCount",
+    "FileShareCapacityQuota",
+    "FileShareCount",
+    "FileShareSnapshotCount",
+    "FileShareSnapshotSize",
+    "Ingress",
+    "PercentFileShareBandwidthUtilization",
+    "PercentFileShareIOPSUtilization",
+    "PercentFileShareUtilization",
+    "SuccessE2ELatency",
+    "SuccessServerLatency",
+    "Transactions",
+  ]
+  included_dimensions = [
+    "ApiName",
+    "FileShare",
+    "ResponseType",
+  ]
+}
+
+prometheus.scrape "azure_storage_files" {
+  job_name   = "integrations/azure/storage_files"
+  targets    = prometheus.exporter.azure.azure_storage_files.targets
+  forward_to = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

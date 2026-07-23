@@ -1,0 +1,22 @@
+// Azure Databricks System Tables -> Alloy Databricks exporter -> LGTM metrics.
+// Microsoft.Databricks/workspaces has no Azure Monitor platform-metric namespace.
+// Requires Unity Catalog, System Tables, a SQL Warehouse and OAuth2 M2M values.
+
+prometheus.exporter.databricks "azure_databricks" {
+  server_hostname     = "<DATABRICKS_WORKSPACE_HOSTNAME>"
+  warehouse_http_path = "<DATABRICKS_SQL_WAREHOUSE_HTTP_PATH>"
+  client_id           = "<DATABRICKS_CLIENT_ID>"
+  client_secret       = "<DATABRICKS_CLIENT_SECRET>"
+  billing_lookback    = "24h"
+  jobs_lookback       = "3h"
+  pipelines_lookback  = "3h"
+  queries_lookback    = "2h"
+}
+
+prometheus.scrape "azure_databricks" {
+  job_name        = "integrations/azure/databricks"
+  targets         = prometheus.exporter.databricks.azure_databricks.targets
+  scrape_interval = "10m"
+  scrape_timeout  = "9m"
+  forward_to      = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

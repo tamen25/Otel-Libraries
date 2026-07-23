@@ -1,0 +1,35 @@
+// Azure Logic Apps Consumption workflows -> Azure Monitor -> LGTM metrics.
+// Paste this entire file at the bottom of aks_alloy.alloy.
+
+prometheus.exporter.azure "azure_logic_apps" {
+  subscriptions    = ["<AZURE_SUBSCRIPTION_ID>"]
+  resource_type    = "Microsoft.Logic/Workflows"
+  metric_namespace = "Microsoft.Logic/Workflows"
+  metrics = [
+    "ActionLatency",
+    "ActionsCompleted",
+    "ActionsFailed",
+    "ActionsStarted",
+    "ActionsSucceeded",
+    "ActionThrottledEvents",
+    "RunFailurePercentage",
+    "RunLatency",
+    "RunsCancelled",
+    "RunsCompleted",
+    "RunsFailed",
+    "RunsStarted",
+    "RunsSucceeded",
+    "RunThrottledEvents",
+    "TriggerLatency",
+    "TriggersFailed",
+    "TriggersFired",
+    "TriggersSucceeded",
+    "TriggerThrottledEvents",
+  ]
+}
+
+prometheus.scrape "azure_logic_apps" {
+  job_name   = "integrations/azure/logic_apps"
+  targets    = prometheus.exporter.azure.azure_logic_apps.targets
+  forward_to = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

@@ -1,0 +1,12 @@
+// Kubernetes object-state metrics.
+// kube-state-metrics must already be installed and reachable in the cluster.
+
+prometheus.scrape "kube_state_metrics" {
+  targets = [{
+    "__address__" = "<KUBE_STATE_METRICS_SERVICE>.<KUBE_STATE_METRICS_NAMESPACE>.svc.cluster.local:<KUBE_STATE_METRICS_PORT>",
+  }]
+
+  job_name        = "integrations/kubernetes/kube-state-metrics"
+  scrape_interval = "60s"
+  forward_to      = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

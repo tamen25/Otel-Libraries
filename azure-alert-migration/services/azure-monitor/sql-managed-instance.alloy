@@ -1,0 +1,23 @@
+// Azure SQL Managed Instance -> Azure Monitor -> LGTM metrics.
+// Paste this entire file at the bottom of aks_alloy.alloy.
+
+prometheus.exporter.azure "azure_sql_managed_instance" {
+  subscriptions    = ["<AZURE_SUBSCRIPTION_ID>"]
+  resource_type    = "Microsoft.Sql/managedInstances"
+  metric_namespace = "Microsoft.Sql/managedInstances"
+  metrics = [
+    "avg_cpu_percent",
+    "io_bytes_read",
+    "io_bytes_written",
+    "io_requests",
+    "reserved_storage_mb",
+    "storage_space_used_mb",
+    "virtual_core_count",
+  ]
+}
+
+prometheus.scrape "azure_sql_managed_instance" {
+  job_name   = "integrations/azure/sql_managed_instance"
+  targets    = prometheus.exporter.azure.azure_sql_managed_instance.targets
+  forward_to = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

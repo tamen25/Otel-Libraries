@@ -1,0 +1,44 @@
+// Azure Logic Apps Standard -> Azure Monitor -> LGTM metrics.
+// Standard uses Microsoft.Web/sites; Consumption uses Microsoft.Logic/Workflows.
+
+prometheus.exporter.azure "azure_logic_apps_standard" {
+  subscriptions    = ["<AZURE_SUBSCRIPTION_ID>"]
+  resource_type    = "Microsoft.Web/sites"
+  metric_namespace = "Microsoft.Web/sites"
+  // Microsoft.Web/sites also contains App Services and Functions. Keep only
+  // Standard Logic Apps, whose Azure resource kind contains "workflowapp".
+  resource_graph_query_filter = "where kind contains \"workflowapp\""
+  metrics = [
+    "AverageMemoryWorkingSet",
+    "CpuTime",
+    "HealthCheckStatus",
+    "Http2xx",
+    "Http4xx",
+    "Http5xx",
+    "HttpResponseTime",
+    "MemoryWorkingSet",
+    "Requests",
+    "WorkflowActionsCompleted",
+    "WorkflowActionsFailureRate",
+    "WorkflowAppJobPullRate",
+    "WorkflowJobExecutionDelay",
+    "WorkflowJobExecutionDuration",
+    "WorkflowRunsCompleted",
+    "WorkflowRunsDispatched",
+    "WorkflowRunsFailureRate",
+    "WorkflowRunsStarted",
+    "WorkflowTriggersCompleted",
+    "WorkflowTriggersFailureRate",
+  ]
+  included_dimensions = [
+    "Instance",
+    "workflowName",
+    "status",
+  ]
+}
+
+prometheus.scrape "azure_logic_apps_standard" {
+  job_name   = "integrations/azure/logic_apps_standard"
+  targets    = prometheus.exporter.azure.azure_logic_apps_standard.targets
+  forward_to = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

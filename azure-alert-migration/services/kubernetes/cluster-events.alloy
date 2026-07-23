@@ -1,0 +1,22 @@
+// Kubernetes Events from every namespace.
+// Persistent Alloy storage prevents old events being replayed after restarts.
+
+loki.source.kubernetes_events "cluster_events" {
+  job_name   = "integrations/kubernetes/eventhandler"
+  log_format = "logfmt"
+  forward_to = [loki.process.cluster_events.receiver]
+
+  clustering {
+    enabled = true
+  }
+}
+
+loki.process "cluster_events" {
+  stage.static_labels {
+    values = {
+      source = "kubernetes-events",
+    }
+  }
+
+  forward_to = [loki.write.loki.receiver]
+}

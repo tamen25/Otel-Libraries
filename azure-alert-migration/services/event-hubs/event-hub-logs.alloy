@@ -1,0 +1,47 @@
+// Azure Event Hub logs -> relabel/enrich -> LGTM Loki.
+// Paste this entire file at the bottom of aks_alloy.alloy.
+
+loki.source.azure_event_hubs "azure_event_hub_logs" {
+  // Kafka endpoint; include the required :9093 port in the replacement value.
+  fully_qualified_namespace = "<EVENT_HUB_FULLY_QUALIFIED_NAMESPACE>"
+  event_hubs               = ["<EVENT_HUB_NAME>"]
+  forward_to               = [loki.relabel.azure_event_hub_logs.receiver]
+
+  authentication {
+    mechanism = "oauth"
+  }
+}
+
+loki.relabel "azure_event_hub_logs" {
+  // Reuse the main file's direct Loki endpoint and tenant configuration.
+  forward_to = [loki.write.loki.receiver]
+
+  rule {
+    action       = "replace"
+    target_label = "job"
+    replacement  = "eventhubAlloy"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "cmdbReference"
+    replacement  = "<CMDB_REFERENCE>"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "cluster"
+    replacement  = "<AKS_RESOURCE_ID>"
+  }
+
+  rule {
+    action       = "replace"
+    target_label = "eventHub"
+    replacement  = "<EVENT_HUB_NAME>"
+  }
+
+  rule {
+    source_labels = ["__azure_event_hubs_category"]
+    target_label  = "category"
+  }
+}

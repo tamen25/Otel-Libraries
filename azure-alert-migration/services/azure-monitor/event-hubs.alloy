@@ -1,0 +1,34 @@
+// Azure Event Hubs platform metrics -> Azure Monitor -> LGTM metrics.
+// This is separate from the Event Hub log-consumer snippet.
+
+prometheus.exporter.azure "azure_event_hubs" {
+  subscriptions    = ["<AZURE_SUBSCRIPTION_ID>"]
+  resource_type    = "Microsoft.EventHub/Namespaces"
+  metric_namespace = "Microsoft.EventHub/Namespaces"
+  metrics = [
+    "ActiveConnections",
+    "CaptureBacklog",
+    "CapturedBytes",
+    "CapturedMessages",
+    "IncomingBytes",
+    "IncomingMessages",
+    "IncomingRequests",
+    "OutgoingBytes",
+    "OutgoingMessages",
+    "QuotaExceededErrors",
+    "ServerErrors",
+    "SuccessfulRequests",
+    "ThrottledRequests",
+    "UserErrors",
+  ]
+  included_dimensions = [
+    "EntityName",
+    "OperationResult",
+  ]
+}
+
+prometheus.scrape "azure_event_hubs" {
+  job_name   = "integrations/azure/event_hubs"
+  targets    = prometheus.exporter.azure.azure_event_hubs.targets
+  forward_to = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}

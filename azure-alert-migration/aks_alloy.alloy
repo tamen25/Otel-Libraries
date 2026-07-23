@@ -1,0 +1,211 @@
+// Main telemetry flow:
+// OTLP receiver / Prometheus receiver
+//   -> batch
+//   -> Alloy/CMDB/cluster enrichment
+//   -> resource attributes copied onto records
+//   -> metrics to Mimir, traces to Tempo, logs to Loki
+
+// -----------------------------------------------------------------------------
+// 1. Receive application telemetry over OTLP/gRPC
+// -----------------------------------------------------------------------------
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    include_metadata = true
+  }
+
+  output {
+    traces  = [otelcol.processor.batch.default.input]
+    metrics = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 2. Shared processing pipeline: batch -> enrich -> flatten resources
+// -----------------------------------------------------------------------------
+
+// Batch all three signals and preserve the tenant header as metadata.
+otelcol.processor.batch "default" {
+  metadata_keys = ["X-Scope-OrgID"]
+
+  output {
+    traces  = [otelcol.processor.attributes.enrich_alloy_labels.input]
+    metrics = [otelcol.processor.attributes.enrich_alloy_labels.input]
+    logs    = [otelcol.processor.attributes.enrich_alloy_labels.input]
+  }
+}
+
+// Add common ownership and cluster attributes to every signal.
+otelcol.processor.attributes "enrich_alloy_labels" {
+  action {
+    action = "insert"
+    key    = "enrichedBy"
+    value  = "alloy"
+  }
+
+  action {
+    action = "insert"
+    key    = "cmdbReference"
+    value  = "<CMDB_REFERENCE>"
+  }
+
+  action {
+    action = "insert"
+    key    = "cluster"
+    value  = "<AKS_RESOURCE_ID>"
+  }
+
+  output {
+    metrics = [otelcol.processor.transform.convert_resources.input]
+    logs    = [otelcol.processor.transform.convert_resources.input]
+    traces  = [otelcol.processor.transform.convert_resources.input]
+  }
+}
+
+// Copy resource attributes onto metric datapoints and log records so downstream
+// queries can use them directly.
+otelcol.processor.transform "convert_resources" {
+  error_mode = "ignore"
+
+  metric_statements {
+    context = "datapoint"
+    statements = [
+      `merge_maps(attributes, resource.attributes, "insert")`,
+    ]
+  }
+
+  log_statements {
+    context = "log"
+    statements = [
+      `merge_maps(attributes, resource.attributes, "insert")`,
+    ]
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.mimir.input]
+    logs    = [otelcol.exporter.loki.loki.input]
+    traces  = [otelcol.exporter.otlphttp.tempo.input]
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 3. Export each signal directly to its LGTM backend
+// -----------------------------------------------------------------------------
+
+// Attach the tenant header to outbound Tempo OTLP/HTTP requests.
+otelcol.auth.headers "creds" {
+  header {
+    key   = "X-Scope-OrgID"
+    value = "<LGTM_TENANT_ID>"
+  }
+}
+
+// Send traces directly to Tempo over OTLP/HTTP.
+otelcol.exporter.otlphttp "tempo" {
+  client {
+    endpoint = "<TEMPO_OTLP_HTTP_ENDPOINT>"
+    auth     = otelcol.auth.headers.creds.handler
+  }
+}
+
+// Convert processed OTel metrics back to Prometheus for Mimir remote_write.
+otelcol.exporter.prometheus "mimir" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+// Send metrics directly to Mimir.
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "<MIMIR_REMOTE_WRITE_ENDPOINT>"
+    headers = {
+      "X-Scope-OrgID" = "<LGTM_TENANT_ID>",
+    }
+  }
+}
+
+// Convert processed OTel logs to Loki entries.
+otelcol.exporter.loki "loki" {
+  forward_to = [loki.write.loki.receiver]
+}
+
+// Send application and Event Hub logs directly to Loki.
+loki.write "loki" {
+  endpoint {
+    url       = "<LOKI_PUSH_ENDPOINT>"
+    tenant_id = "<LGTM_TENANT_ID>"
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 4. Kubernetes service metrics: discover -> scrape -> convert -> shared batch
+// -----------------------------------------------------------------------------
+
+// Discover services only in the configured namespaces.
+discovery.kubernetes "services" {
+  role = "service"
+
+  namespaces {
+    own_namespace = true
+    names         = ["<KUBERNETES_NAMESPACE>"]
+  }
+}
+
+// Convert discovered services into Prometheus scrape targets.
+discovery.relabel "services" {
+  targets = discovery.kubernetes.services.targets
+}
+
+// Scrape service metrics and send them into the OTel processing pipeline.
+prometheus.scrape "services" {
+  scrape_interval = "60s"
+  targets         = discovery.relabel.services.output
+  forward_to      = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}
+
+// Shared bridge used by service, cAdvisor and Azure Prometheus scrapes.
+otelcol.receiver.prometheus "convert_metrics" {
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 5. Kubernetes node metrics: discover -> kubelet proxy -> cAdvisor scrape
+// -----------------------------------------------------------------------------
+
+// Discover every Kubernetes node.
+discovery.kubernetes "k8s_nodes" {
+  role = "node"
+}
+
+// Rewrite each node target to its API-server-proxied cAdvisor endpoint.
+discovery.relabel "cadvisor" {
+  targets = discovery.kubernetes.k8s_nodes.targets
+
+  rule {
+    replacement  = "kubernetes.default.svc:443"
+    target_label = "__address__"
+  }
+
+  rule {
+    regex         = "(.+)"
+    source_labels = ["__meta_kubernetes_node_name"]
+    replacement   = "/api/v1/nodes/$1/proxy/metrics/cadvisor"
+    target_label  = "__metrics_path__"
+  }
+}
+
+// Scrape cAdvisor through the Kubernetes API using the pod service account.
+prometheus.scrape "cadvisor" {
+  job_name   = "integrations/kubernetes/cadvisor"
+  targets    = discovery.relabel.cadvisor.output
+  scheme     = "https"
+
+  tls_config {
+    insecure_skip_verify = true
+  }
+
+  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+  forward_to        = [otelcol.receiver.prometheus.convert_metrics.receiver]
+}
